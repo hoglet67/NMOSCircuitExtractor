@@ -21,7 +21,7 @@ public class NMOSCircuitExtractor {
             Graph<CircuitNode, CircuitEdge> graph = graphBuilder.readNetlist(transdefs, segdefs);
             graphBuilder.dumpStats();
 
-            Module mod = ModuleGen.superbufferModule();
+            Module mod = ModuleGen.registerModule();
 
             // Look for instances of the subgraph in the main graph
             IsomorphismInspector<CircuitNode, CircuitEdge> inspector = new VF2SubgraphIsomorphismInspector<CircuitNode, CircuitEdge>(
