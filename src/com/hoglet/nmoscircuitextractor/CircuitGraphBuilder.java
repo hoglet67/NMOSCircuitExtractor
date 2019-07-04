@@ -24,7 +24,7 @@ public class CircuitGraphBuilder {
     protected int net_vss = 1;
     protected int net_vcc = 2;
     protected Map<Integer, NetNode> netMap = new HashMap<Integer, NetNode>();
-    protected Set<CircuitNode> pullupSet = new HashSet<CircuitNode>();
+    protected Set<String> pullupSet = new TreeSet<String>();
     protected Graph<CircuitNode, CircuitEdge> graph;
 
     public CircuitGraphBuilder() {
@@ -245,11 +245,18 @@ public class CircuitGraphBuilder {
         throw new RuntimeException("Edge of type " + type.name() + " not found from node " + node.getId());
     }
 
-    public void traverseOrNet(StringBuffer sb, CircuitNode net, boolean root, CircuitNode skipping) {
+    public void traverseOrNet(StringBuffer sb, CircuitNode net, boolean root, CircuitNode skipping, Set<String> visited,
+            boolean debug) {
         if (net.type != NodeType.VT_NET) {
             throw new RuntimeException("Node " + net.getId() + " is not a net");
         }
-        // System.out.println("net = " + net.getId());
+        if (debug) {
+            System.out.println("net = " + net.getId());
+        }
+        if (visited.contains(net.getId())) {
+            return;
+        }
+        visited.add(net.getId());
         CircuitNode gateNet;
         CircuitNode sourceNet;
         sb.append("(");
@@ -264,23 +271,27 @@ public class CircuitGraphBuilder {
                 if (skipping != null & tr.equals(skipping)) {
                     continue;
                 }
-                // System.out.println("TR: " + tr.getId() + " type " +
-                // tr.getType().name());
+                if (debug) {
+                    System.out.println("TR: " + tr.getId() + " type " + tr.getType().name());
+                }
                 switch (tr.getType()) {
                 case VT_EFET:
+                    gateNet = followOutgoingEdge(tr, EdgeType.GATE, null);
+                    sourceNet = followOutgoingEdge(tr, EdgeType.CHANNEL, edge);
+                    if (visited.contains(sourceNet.getId())) {
+                        continue;
+                    }
                     if (!first) {
                         sb.append(" OR ");
                     }
                     first = false;
-                    gateNet = followOutgoingEdge(tr, EdgeType.GATE, null);
                     sb.append("[");
                     sb.append(gateNet.getId());
                     sb.append(" AND ");
-                    sourceNet = followOutgoingEdge(tr, EdgeType.CHANNEL, edge);
-                    if (pullupSet.contains(sourceNet)) {
+                    if (pullupSet.contains(sourceNet.getId())) {
                         sb.append(sourceNet.getId());
                     } else {
-                        traverseOrNet(sb, sourceNet, false, tr);
+                        traverseOrNet(sb, sourceNet, false, tr, visited, debug);
                     }
                     sb.append("]");
                     break;
@@ -297,34 +308,36 @@ public class CircuitGraphBuilder {
                         continue;
                     }
                 default:
-                    sb.append("#" + tr.getType() + "#" + net.getId() + "#");
-                    // hrow new RuntimeException("Unexpected " + tr.getType() +
-                    // " connected to net " + net.getId());
+                    // sb.append("?" + tr.getType() + "?" + net.getId() + "?");
+                    throw new RuntimeException("Unexpected " + tr.getType() + " connected to net " + net.getId());
                 }
 
             }
         }
         sb.append(")");
+        visited.remove(net.getId());
     }
 
     public void buildPullupSet() {
+        System.out.println("Building pullup set");
         for (CircuitNode node : graph.vertexSet()) {
             if (node.getType() == NodeType.VT_NET) {
                 for (CircuitEdge edge : graph.incomingEdgesOf(node)) {
                     CircuitNode source = graph.getEdgeSource(edge);
                     if (source.getType() == NodeType.VT_DPULLUP || source.getType() == NodeType.VT_EPULLUP
                             || source.getType() == NodeType.VT_EFET_VCC) {
-                        pullupSet.add(node);
+                        pullupSet.add(node.getId());
                     }
                 }
             }
         }
+        // for (String id : pullupSet) {
+        // System.out.println(id);
+        // }
+        System.out.println("Building pullup set done; size = " + pullupSet.size());
     }
 
     public void detectGates() {
-        System.out.println("Building pullup set");
-        buildPullupSet();
-        System.out.println("Building pullup set done; size = " + pullupSet.size());
         for (CircuitNode node : graph.vertexSet()) {
             // Start search at a depletion pullup
             if (node.getType() == NodeType.VT_DPULLUP) {
@@ -332,7 +345,7 @@ public class CircuitGraphBuilder {
                 CircuitNode net = followOutgoingEdge(node, EdgeType.CHANNEL, null);
                 sb.append(net.getId());
                 sb.append(" = ");
-                traverseOrNet(sb, net, true, null);
+                traverseOrNet(sb, net, true, null, new HashSet<String>(), false);
                 System.out.println(sb);
             }
         }

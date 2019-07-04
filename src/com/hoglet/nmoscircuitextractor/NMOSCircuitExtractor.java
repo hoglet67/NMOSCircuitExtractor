@@ -13,6 +13,8 @@ public class NMOSCircuitExtractor {
             graphBuilder.readNetlist(transdefs, segdefs);
             graphBuilder.dumpStats();
 
+            graphBuilder.buildPullupSet();
+
             // Remove some known modules
             graphBuilder.replaceModule(ModuleGen.registerModule());
             graphBuilder.replaceModule(ModuleGen.invertingSuperBufferModule());
