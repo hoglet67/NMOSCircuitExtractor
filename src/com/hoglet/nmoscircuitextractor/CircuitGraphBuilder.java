@@ -5,19 +5,26 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.jgrapht.Graph;
+import org.jgrapht.GraphMapping;
+import org.jgrapht.alg.isomorphism.IsomorphismInspector;
+import org.jgrapht.alg.isomorphism.VF2SubgraphIsomorphismInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
+import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
 import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class CircuitGraphBuilder {
     protected int net_vss = 1;
     protected int net_vcc = 2;
     protected Map<Integer, NetNode> netMap = new HashMap<Integer, NetNode>();
+    protected Set<CircuitNode> pullupSet = new HashSet<CircuitNode>();
     protected Graph<CircuitNode, CircuitEdge> graph;
 
     public CircuitGraphBuilder() {
@@ -220,4 +227,142 @@ public class CircuitGraphBuilder {
         }
     }
 
+    public CircuitNode followOutgoingEdge(CircuitNode node, EdgeType type, CircuitEdge skipping) {
+        // System.out.println("skipping = " + skipping);
+        for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
+            // System.out.println("edge = " + edge);
+
+            if (skipping != null && edge.equals(skipping)) {
+                // System.out.println("Skipped!!");
+                continue;
+            }
+            if (edge.getType() == type) {
+                CircuitNode target = graph.getEdgeTarget(edge);
+                // System.out.println("Target = " + target.getId());
+                return target;
+            }
+        }
+        throw new RuntimeException("Edge of type " + type.name() + " not found from node " + node.getId());
+    }
+
+    public void traverseOrNet(StringBuffer sb, CircuitNode net, boolean root, CircuitNode skipping) {
+        if (net.type != NodeType.VT_NET) {
+            throw new RuntimeException("Node " + net.getId() + " is not a net");
+        }
+        // System.out.println("net = " + net.getId());
+        CircuitNode gateNet;
+        CircuitNode sourceNet;
+        sb.append("(");
+        boolean first = true;
+        for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
+            if (!root && edge.getType() == EdgeType.GATE) {
+                // System.out.println("Unexpected gate connected to net " +
+                // net.getId());
+                sb.append("#gate#" + net.getId() + "#");
+            } else if (edge.getType() == EdgeType.CHANNEL) {
+                CircuitNode tr = graph.getEdgeSource(edge);
+                if (skipping != null & tr.equals(skipping)) {
+                    continue;
+                }
+                // System.out.println("TR: " + tr.getId() + " type " +
+                // tr.getType().name());
+                switch (tr.getType()) {
+                case VT_EFET:
+                    if (!first) {
+                        sb.append(" OR ");
+                    }
+                    first = false;
+                    gateNet = followOutgoingEdge(tr, EdgeType.GATE, null);
+                    sb.append("[");
+                    sb.append(gateNet.getId());
+                    sb.append(" AND ");
+                    sourceNet = followOutgoingEdge(tr, EdgeType.CHANNEL, edge);
+                    if (pullupSet.contains(sourceNet)) {
+                        sb.append(sourceNet.getId());
+                    } else {
+                        traverseOrNet(sb, sourceNet, false, tr);
+                    }
+                    sb.append("]");
+                    break;
+                case VT_EFET_VSS:
+                    if (!first) {
+                        sb.append(" OR ");
+                    }
+                    first = false;
+                    gateNet = followOutgoingEdge(tr, EdgeType.GATE, null);
+                    sb.append(gateNet.getId());
+                    break;
+                case VT_DPULLUP:
+                    if (root) {
+                        continue;
+                    }
+                default:
+                    sb.append("#" + tr.getType() + "#" + net.getId() + "#");
+                    // hrow new RuntimeException("Unexpected " + tr.getType() +
+                    // " connected to net " + net.getId());
+                }
+
+            }
+        }
+        sb.append(")");
+    }
+
+    public void buildPullupSet() {
+        for (CircuitNode node : graph.vertexSet()) {
+            if (node.getType() == NodeType.VT_NET) {
+                for (CircuitEdge edge : graph.incomingEdgesOf(node)) {
+                    CircuitNode source = graph.getEdgeSource(edge);
+                    if (source.getType() == NodeType.VT_DPULLUP || source.getType() == NodeType.VT_EPULLUP
+                            || source.getType() == NodeType.VT_EFET_VCC) {
+                        pullupSet.add(node);
+                    }
+                }
+            }
+        }
+    }
+
+    public void detectGates() {
+        System.out.println("Building pullup set");
+        buildPullupSet();
+        System.out.println("Building pullup set done; size = " + pullupSet.size());
+        for (CircuitNode node : graph.vertexSet()) {
+            // Start search at a depletion pullup
+            if (node.getType() == NodeType.VT_DPULLUP) {
+                StringBuffer sb = new StringBuffer();
+                CircuitNode net = followOutgoingEdge(node, EdgeType.CHANNEL, null);
+                sb.append(net.getId());
+                sb.append(" = ");
+                traverseOrNet(sb, net, true, null);
+                System.out.println(sb);
+            }
+        }
+    }
+
+    public void replaceModule(Module mod) {
+        // Look for instances of the subgraph in the main graph
+        IsomorphismInspector<CircuitNode, CircuitEdge> inspector = new VF2SubgraphIsomorphismInspector<CircuitNode, CircuitEdge>(
+                graph, mod.getGraph(), new CircuitNodeComparator(), new CircuitEdgeCompator());
+        Iterator<GraphMapping<CircuitNode, CircuitEdge>> it = inspector.getMappings();
+        int count = 0;
+        while (it.hasNext()) {
+            GraphMapping<CircuitNode, CircuitEdge> mapping = it.next();
+
+            // Log the mapping
+            // for (NetNode subp : mod.getPorts()) {
+            // System.out.println("Port " + subp.id + " =>" +
+            // mapping.getVertexCorrespondence(subp, false).getId());
+            // }
+
+            // Remove the components
+            for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+                if (subcn.getType() != NodeType.VT_NET_EXT) {
+                    CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+                    graph.removeVertex(cn);
+                }
+            }
+
+            count++;
+        }
+        System.out.println("Found " + count + " mappings");
+    }
 }
