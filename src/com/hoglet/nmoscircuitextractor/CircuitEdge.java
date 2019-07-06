@@ -5,7 +5,7 @@ import org.jgrapht.graph.DefaultEdge;
 public class CircuitEdge extends DefaultEdge {
 
     public enum EdgeType {
-        GATE, CHANNEL,
+        UNSPECIFIED, GATE, CHANNEL, INPUT, OUTPUT, BIDIRECTIONAL
     }
 
     private static final long serialVersionUID = -9006421010257447181L;
@@ -13,19 +13,16 @@ public class CircuitEdge extends DefaultEdge {
     private EdgeType type;
 
     public CircuitEdge() {
-        super();
+        this(EdgeType.UNSPECIFIED);
     }
 
     public CircuitEdge(EdgeType type) {
+        super();
         this.type = type;
     }
 
-    public void setGate() {
-        this.type = EdgeType.GATE;
-    }
-
-    public void setChannel() {
-        this.type = EdgeType.CHANNEL;
+    public void setType(EdgeType type) {
+        this.type = type;
     }
 
     public EdgeType getType() {

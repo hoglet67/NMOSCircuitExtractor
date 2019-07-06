@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -73,7 +76,7 @@ public class CircuitGraphBuilder {
         // TODO: Deduplicate
         graph.addVertex(tr);
         CircuitNode netNode = addNet(net);
-        graph.addEdge(tr, netNode).setChannel();
+        graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
         return tr;
     }
 
@@ -171,15 +174,15 @@ public class CircuitGraphBuilder {
         graph.addVertex(tr);
         if (gate != null) {
             CircuitNode netNode = addNet(gate);
-            graph.addEdge(tr, netNode).setGate();
+            graph.addEdge(tr, netNode).setType(EdgeType.GATE);
         }
         if (c1 != null) {
             CircuitNode netNode = addNet(c1);
-            graph.addEdge(tr, netNode).setChannel();
+            graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
         }
         if (c2 != null) {
             CircuitNode netNode = addNet(c2);
-            graph.addEdge(tr, netNode).setChannel();
+            graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
         }
         tr.setFunction("" + gate);
 
@@ -269,15 +272,15 @@ public class CircuitGraphBuilder {
         System.out.println("Building pullup set done; size = " + pullupSet.size());
     }
 
-    // Returns the set of transistors connected to the net
-    private Set<TransistorNode> getConnectedTransistors(NetNode net) {
-        HashSet<TransistorNode> result = new HashSet<TransistorNode>();
+    // Returns the set of components connected to the net
+    private Set<CircuitNode> getNeighbours(NetNode net) {
+        HashSet<CircuitNode> result = new HashSet<CircuitNode>();
         for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
             CircuitNode node = graph.getEdgeSource(edge);
             if (node.getType() == NodeType.VT_NET || node.getType() == NodeType.VT_NET_EXT) {
                 throw new RuntimeException("Currupt graph");
             }
-            result.add((TransistorNode) node);
+            result.add(node);
         }
         return result;
     }
@@ -289,7 +292,7 @@ public class CircuitGraphBuilder {
         return n1 == null && n2 == null;
     }
 
-    private Set<Integer> getConnections(TransistorNode tn, EdgeType type) {
+    private Set<Integer> getConnections(CircuitNode tn, EdgeType type) {
         Set<Integer> nets = new HashSet<Integer>();
         for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
             if (edge.getType() == type) {
@@ -340,8 +343,9 @@ public class CircuitGraphBuilder {
     private Set<TransistorNode> findParallelTransistors(Integer n1, Integer n2) {
         HashSet<TransistorNode> result = new HashSet<TransistorNode>();
         Integer n = n1 != null ? n1 : n2;
-        for (TransistorNode tn : getConnectedTransistors(getNet(n))) {
-            if (tn.isCombinable()) {
+        for (CircuitNode cn : getNeighbours(getNet(n))) {
+            if (cn.isCombinable()) {
+                TransistorNode tn = (TransistorNode) cn;
                 if (sameNet(getC1(tn), n1) && sameNet(getC2(tn), n2)) {
                     result.add(tn);
                 } else if (sameNet(getC1(tn), n2) && sameNet(getC2(tn), n1)) {
@@ -353,13 +357,14 @@ public class CircuitGraphBuilder {
     }
 
     private TransistorNode findSeriesTransistor(TransistorNode tn, Integer n1) {
-        Set<TransistorNode> ts = getConnectedTransistors(getNet(n1));
+        Set<CircuitNode> ts = getNeighbours(getNet(n1));
         if (ts.size() == 2) {
             if (!ts.remove(tn)) {
                 throw new RuntimeException("findSeriesTransistors: set did not contain " + tn.getId());
             }
-            TransistorNode z = ts.iterator().next();
-            if (z.isCombinable()) {
+            CircuitNode cn = ts.iterator().next();
+            if (cn.isCombinable()) {
+                TransistorNode z = (TransistorNode) cn;
                 if (n1.equals(getC1(z)) || n1.equals(getC2(z))) {
                     return z;
                 }
@@ -368,9 +373,13 @@ public class CircuitGraphBuilder {
         return null;
     }
 
-    private String dumpConnections(Set<Integer> nets) {
+    private void dumpConnections(String message, Set<Integer> nets) {
+        if (nets.size() == 0) {
+            return;
+        }
         StringBuffer sb = new StringBuffer();
-        sb.append('[');
+        sb.append(message);
+        sb.append(": [");
         boolean first = true;
         for (Integer net : nets) {
             if (!first) {
@@ -383,14 +392,20 @@ public class CircuitGraphBuilder {
             first = false;
         }
         sb.append(']');
-        return sb.toString();
+        System.out.println(sb.toString());
     }
 
-    private void dumpTr(TransistorNode tn) {
+    private void dumpNode(CircuitNode tn) {
         System.out.println(tn);
-        System.out.println("    gate: " + dumpConnections(getConnections(tn, EdgeType.GATE)));
-        System.out.println(" channel: " + dumpConnections(getConnections(tn, EdgeType.CHANNEL)));
-        System.out.println("      fn: " + tn.getFunction());
+        dumpConnections("             gate", getConnections(tn, EdgeType.GATE));
+        dumpConnections("          channel", getConnections(tn, EdgeType.CHANNEL));
+        dumpConnections("            input", getConnections(tn, EdgeType.INPUT));
+        dumpConnections("           output", getConnections(tn, EdgeType.OUTPUT));
+        dumpConnections("    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
+        dumpConnections("      unspecified", getConnections(tn, EdgeType.UNSPECIFIED));
+        if (tn instanceof TransistorNode) {
+            System.out.println("               fn: " + ((TransistorNode) tn).getFunction());
+        }
     }
 
     private NetNode getNet(Integer net) {
@@ -425,7 +440,7 @@ public class CircuitGraphBuilder {
                             for (Integer gate : getConnections(t2, EdgeType.GATE)) {
                                 CircuitEdge edge = graph.addEdge(t1, getNet(gate));
                                 if (edge != null) {
-                                    edge.setGate();
+                                    edge.setType(EdgeType.GATE);
                                 }
                             }
                             graph.removeVertex(t2);
@@ -478,7 +493,7 @@ public class CircuitGraphBuilder {
                     }
                     if (other != null) {
                         CircuitNode otherNet = getNet(other);
-                        graph.addEdge(t1, otherNet).setChannel();
+                        graph.addEdge(t1, otherNet).setType(EdgeType.CHANNEL);
                     }
                     if (t1.getType() == NodeType.VT_EFET_VSS || t2.getType() == NodeType.VT_EFET_VSS) {
                         t1.setType(NodeType.VT_EFET_VSS);
@@ -495,11 +510,10 @@ public class CircuitGraphBuilder {
         } while (!done);
         dumpStats();
         for (CircuitNode node : graph.vertexSet()) {
-            if (node instanceof TransistorNode) {
-                dumpTr((TransistorNode) node);
+            if (node.getType() != NodeType.VT_NET) {
+                dumpNode(node);
             }
         }
-
     }
 
     public void replaceModule(Module mod) {
@@ -508,16 +522,11 @@ public class CircuitGraphBuilder {
                 graph, mod.getGraph(), new CircuitNodeComparator(), new CircuitEdgeCompator());
         Iterator<GraphMapping<CircuitNode, CircuitEdge>> it = inspector.getMappings();
         int count = 0;
+        Map<ModuleNode, List<ModulePort>> toAdd = new HashMap<ModuleNode, List<ModulePort>>();
         while (it.hasNext()) {
             GraphMapping<CircuitNode, CircuitEdge> mapping = it.next();
 
-            // Log the mapping
-            // for (NetNode subp : mod.getPorts()) {
-            // System.out.println("Port " + subp.id + " =>" +
-            // mapping.getVertexCorrespondence(subp, false).getId());
-            // }
-
-            // Remove the components
+            // Remove the transistors etc
             for (CircuitNode subcn : mod.getGraph().vertexSet()) {
                 if (subcn.getType() != NodeType.VT_NET_EXT) {
                     CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
@@ -525,7 +534,24 @@ public class CircuitGraphBuilder {
                 }
             }
 
+            // Add a module
             count++;
+            ModuleNode modNode = new ModuleNode(mod.getName() + count);
+            System.out.println(modNode.getId());
+            List<ModulePort> ports = new LinkedList<ModulePort>();
+            for (ModulePort subp : mod.getPorts()) {
+                CircuitNode netNode = mapping.getVertexCorrespondence(subp.getNet(), false);
+                ports.add(new ModulePort(subp.getType(), (NetNode) netNode));
+            }
+            toAdd.put(modNode, ports);
+
+        }
+        for (Entry<ModuleNode, List<ModulePort>> entry : toAdd.entrySet()) {
+            ModuleNode modNode = entry.getKey();
+            graph.addVertex(modNode);
+            for (ModulePort modPort : entry.getValue()) {
+                graph.addEdge(modNode, modPort.getNet()).setType(modPort.getType());
+            }
         }
         System.out.println("Found " + count + " mappings");
     }
