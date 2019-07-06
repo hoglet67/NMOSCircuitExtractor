@@ -416,6 +416,15 @@ public class CircuitGraphBuilder {
         return netNode;
     }
 
+    public void copyGateEdges(CircuitNode t1, CircuitNode t2) {
+        for (Integer gate : getConnections(t2, EdgeType.GATE)) {
+            CircuitEdge edge = graph.addEdge(t1, getNet(gate));
+            if (edge != null) {
+                edge.setType(EdgeType.GATE);
+            }
+        }
+    }
+
     public void detectGates() {
         boolean done;
         do {
@@ -437,12 +446,7 @@ public class CircuitGraphBuilder {
                             f.append(" OR ");
                             f.append(t2.getFunction());
                             // Move T2 gate connections to T1
-                            for (Integer gate : getConnections(t2, EdgeType.GATE)) {
-                                CircuitEdge edge = graph.addEdge(t1, getNet(gate));
-                                if (edge != null) {
-                                    edge.setType(EdgeType.GATE);
-                                }
-                            }
+                            copyGateEdges(t1, t2);
                             graph.removeVertex(t2);
                         }
                         f.append(")");
@@ -495,6 +499,8 @@ public class CircuitGraphBuilder {
                         CircuitNode otherNet = getNet(other);
                         graph.addEdge(t1, otherNet).setType(EdgeType.CHANNEL);
                     }
+                    // Move T2 gate connections to T1
+                    copyGateEdges(t1, t2);
                     if (t1.getType() == NodeType.VT_EFET_VSS || t2.getType() == NodeType.VT_EFET_VSS) {
                         t1.setType(NodeType.VT_EFET_VSS);
                     }
