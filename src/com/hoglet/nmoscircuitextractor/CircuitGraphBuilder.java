@@ -261,6 +261,28 @@ public class CircuitGraphBuilder {
         }
     }
 
+    public void dumpGraph() {
+        for (CircuitNode node : graph.vertexSet()) {
+            if (node.getType() != NodeType.VT_NET) {
+                dumpNode(node);
+            }
+        }
+    }
+
+    public void validateGraph() {
+        int count = 0;
+        for (CircuitNode node : graph.vertexSet()) {
+            if (node.getType() == NodeType.VT_NET) {
+                Set<CircuitEdge> edges = graph.incomingEdgesOf(node);
+                if (edges.size() < 2) {
+                    System.out.println("Warning: net  " + node.getId() + " has only " + edges.size() + " connections");
+                    count++;
+                }
+            }
+        }
+        System.out.println("Validation: " + count + " warnings");
+    }
+
     public void buildPullupSet() {
         System.out.println("Building pullup set");
         for (CircuitNode node : graph.vertexSet()) {
@@ -442,7 +464,8 @@ public class CircuitGraphBuilder {
                         f.append("(");
                         f.append(t1.getFunction());
                         for (TransistorNode t2 : parallel) {
-                            System.out.println("P Merging " + t2.getId() + " into " + t1.getId());
+                            // System.out.println("P Merging " + t2.getId() + "
+                            // into " + t1.getId());
                             f.append(" OR ");
                             f.append(t2.getFunction());
                             // Move T2 gate connections to T1
@@ -476,7 +499,8 @@ public class CircuitGraphBuilder {
                     if (t2 == null) {
                         continue;
                     }
-                    System.out.println("S Merging " + t2.getId() + " into " + t1.getId());
+                    // System.out.println("S Merging " + t2.getId() + " into " +
+                    // t1.getId());
                     StringBuffer f = new StringBuffer();
                     f.append("(");
                     f.append(t1.getFunction());
@@ -505,21 +529,14 @@ public class CircuitGraphBuilder {
                         t1.setType(NodeType.VT_EFET_VSS);
                     }
                     NetNode innerNet = getNet(inner);
-                    graph.removeAllEdges(t1, innerNet);
-                    graph.removeAllEdges(t2, innerNet);
                     graph.removeVertex(t2);
+                    graph.removeVertex(innerNet);
                     done = false;
                     break; // Avoids a concurrent modification exception at
                            // the expense of some efficiency
                 }
             }
         } while (!done);
-        dumpStats();
-        for (CircuitNode node : graph.vertexSet()) {
-            if (node.getType() != NodeType.VT_NET) {
-                dumpNode(node);
-            }
-        }
     }
 
     public void replaceModule(Module mod) {
@@ -543,7 +560,7 @@ public class CircuitGraphBuilder {
             // Add a module
             count++;
             ModuleNode modNode = new ModuleNode(mod.getName() + count);
-            System.out.println(modNode.getId());
+            // System.out.println(modNode.getId());
             List<ModulePort> ports = new LinkedList<ModulePort>();
             for (ModulePort subp : mod.getPorts()) {
                 CircuitNode netNode = mapping.getVertexCorrespondence(subp.getNet(), false);
@@ -559,6 +576,6 @@ public class CircuitGraphBuilder {
                 graph.addEdge(modNode, modPort.getNet()).setType(modPort.getType());
             }
         }
-        System.out.println("Found " + count + " mappings");
+        System.out.println(mod.getName() + ": replaced " + count + " instances");
     }
 }
