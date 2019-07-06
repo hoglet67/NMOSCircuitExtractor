@@ -368,9 +368,29 @@ public class CircuitGraphBuilder {
         return null;
     }
 
+    private String dumpConnections(Set<Integer> nets) {
+        StringBuffer sb = new StringBuffer();
+        sb.append('[');
+        boolean first = true;
+        for (Integer net : nets) {
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append("" + net);
+            if (!pullupSet.contains("" + net)) {
+                sb.append('#');
+            }
+            first = false;
+        }
+        sb.append(']');
+        return sb.toString();
+    }
+
     private void dumpTr(TransistorNode tn) {
-        System.out.println(tn + "; gate: " + getConnections(tn, EdgeType.GATE) + "; channel: "
-                + getConnections(tn, EdgeType.CHANNEL) + "fn:" + tn.getFunction());
+        System.out.println(tn);
+        System.out.println("    gate: " + dumpConnections(getConnections(tn, EdgeType.GATE)));
+        System.out.println(" channel: " + dumpConnections(getConnections(tn, EdgeType.CHANNEL)));
+        System.out.println("      fn: " + tn.getFunction());
     }
 
     private NetNode getNet(Integer net) {
@@ -475,7 +495,7 @@ public class CircuitGraphBuilder {
         } while (!done);
         dumpStats();
         for (CircuitNode node : graph.vertexSet()) {
-            if (node.isCombinable()) {
+            if (node instanceof TransistorNode) {
                 dumpTr((TransistorNode) node);
             }
         }
