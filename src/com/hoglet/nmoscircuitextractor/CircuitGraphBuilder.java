@@ -33,12 +33,7 @@ public class CircuitGraphBuilder {
     protected Set<String> duplicate_map = new HashSet<String>();
 
     public CircuitGraphBuilder() {
-        clearNetMap();
         graph = new DefaultDirectedGraph<CircuitNode, CircuitEdge>(CircuitEdge.class);
-    }
-
-    private void clearNetMap() {
-        netMap.clear();
     }
 
     private NetNode addNet(Integer net) {
@@ -61,6 +56,14 @@ public class CircuitGraphBuilder {
         return netNode;
     }
 
+    private NetNode getNet(Integer net) {
+        NetNode netNode = netMap.get(net);
+        if (netNode == null) {
+            throw new RuntimeException("Failed to lookup net " + net);
+        }
+        return netNode;
+    }
+
     private String getHash(TransistorNode tr, Integer gate, Integer c1, Integer c2) {
         return tr.getType() + "_" + gate + "_" + c1 + "_" + c2;
     }
@@ -73,7 +76,12 @@ public class CircuitGraphBuilder {
 
     public TransistorNode addPullup(String id, int net) {
         TransistorNode tr = new TransistorNode(NodeType.VT_DPULLUP, id);
-        // TODO: Deduplicate
+        String hash = getHash(tr, net, null, null);
+        if (duplicate_map.contains(hash)) {
+            System.out.println("Skipping duplicate transistor: " + tr.getId());
+            return null;
+        }
+        duplicate_map.add(hash);
         graph.addVertex(tr);
         CircuitNode netNode = addNet(net);
         graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
@@ -406,14 +414,6 @@ public class CircuitGraphBuilder {
         if (tn instanceof TransistorNode) {
             System.out.println("               fn: " + ((TransistorNode) tn).getFunction());
         }
-    }
-
-    private NetNode getNet(Integer net) {
-        NetNode netNode = netMap.get(net);
-        if (netNode == null) {
-            throw new RuntimeException("Failed to lookup net " + net);
-        }
-        return netNode;
     }
 
     public void copyGateEdges(CircuitNode t1, CircuitNode t2) {
