@@ -18,6 +18,6 @@ public class NetNode extends CircuitNode {
     }
 
     public void setAsExternal() {
-        type = NodeType.VT_NET_EXT;
+        setType(NodeType.VT_NET_EXT);
     }
 }

@@ -27,6 +27,9 @@ public class CircuitGraphBuilder {
     protected Set<String> pullupSet = new TreeSet<String>();
     protected Graph<CircuitNode, CircuitEdge> graph;
 
+    
+    protected Set<String> duplicate_map = new HashSet<String>();
+    
     public CircuitGraphBuilder() {
         clearNetMap();
         graph = new DefaultDirectedGraph<CircuitNode, CircuitEdge>(CircuitEdge.class);
@@ -56,22 +59,28 @@ public class CircuitGraphBuilder {
         return netNode;
     }
 
+    private String getHash(TransistorNode tr) {
+        return tr.getType() + "_" + tr.getGate() + "_" + tr.getC1() + "_" + tr.getC2();
+    }
+    
     private void addTransistor(TransistorNode tr) {
-        if (graph.containsVertex(tr)) {
+        String hash = getHash(tr);        
+        if (duplicate_map.contains(hash)) {
             System.out.println("Skipping duplicate transistor: " + tr.getId());
             return;
         }
+        duplicate_map.add(hash);
         graph.addVertex(tr);
-        if (tr.gate != null) {
-            CircuitNode netNode = addNet(tr.gate);
+        if (tr.getGate() != null) {
+            CircuitNode netNode = addNet(tr.getGate());
             graph.addEdge(tr, netNode).setGate();
         }
-        if (tr.c1 != null) {
-            CircuitNode netNode = addNet(tr.c1);
+        if (tr.getC1() != null) {
+            CircuitNode netNode = addNet(tr.getC1());
             graph.addEdge(tr, netNode).setChannel();
         }
-        if (tr.c2 != null) {
-            CircuitNode netNode = addNet(tr.c2);
+        if (tr.getC2() != null) {
+            CircuitNode netNode = addNet(tr.getC2());
             graph.addEdge(tr, netNode).setChannel();
         }
     }
@@ -247,7 +256,7 @@ public class CircuitGraphBuilder {
 
     public void traverseOrNet(StringBuffer sb, CircuitNode net, boolean root, CircuitNode skipping, Set<String> visited,
             boolean debug) {
-        if (net.type != NodeType.VT_NET) {
+        if (net.getType() != NodeType.VT_NET) {
             throw new RuntimeException("Node " + net.getId() + " is not a net");
         }
         if (debug) {
@@ -337,7 +346,7 @@ public class CircuitGraphBuilder {
         System.out.println("Building pullup set done; size = " + pullupSet.size());
     }
 
-    public void detectGates() {
+    public void detectGatesOld() {
         for (CircuitNode node : graph.vertexSet()) {
             // Start search at a depletion pullup
             if (node.getType() == NodeType.VT_DPULLUP) {
@@ -349,6 +358,184 @@ public class CircuitGraphBuilder {
                 System.out.println(sb);
             }
         }
+    }
+
+    // // Returns the set of nets connected to the transistor channel
+    // public Set<NetNode> getConnectedNets(TransistorNode node) {
+    // HashSet<NetNode> result = new HashSet<NetNode>();
+    // for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
+    // if (edge.getType() == EdgeType.CHANNEL) {
+    // CircuitNode net = graph.getEdgeTarget(edge);
+    // if (net.getType() == NodeType.VT_NET) {
+    // result.add((NetNode) net);
+    // } else {
+    // throw new RuntimeException("Corrupted graph");
+    // }
+    // }
+    // }
+    // return result;
+    // }
+
+    // Returns the set of transistors connected to the net
+    public Set<TransistorNode> getConnectedTransistors(NetNode net) {
+        HashSet<TransistorNode> result = new HashSet<TransistorNode>();
+        for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
+            CircuitNode node = graph.getEdgeSource(edge);
+            if (node.isCombinable()) {
+                result.add((TransistorNode) node);
+            }
+        }
+        return result;
+    }
+
+    public static boolean sameNet(Integer n1, Integer n2) {
+        if (n1 != null && n2 != null) {
+            return n1.equals(n2);
+        }
+        return n1 == null && n2 == null;
+    }
+
+    public Set<TransistorNode> findParallelTransistors(Integer n1, Integer n2) {
+        HashSet<TransistorNode> result = new HashSet<TransistorNode>();
+        Integer n = n1 != null ? n1 : n2;
+        NetNode net1 = netMap.get(n);
+        if (net1 == null) {
+            throw new RuntimeException("Failed to lookup net " + n1);
+        }
+        for (TransistorNode tn : getConnectedTransistors(net1)) {
+            if (sameNet(tn.getC1(), n1) && sameNet(tn.getC2(), n2)) {
+                result.add(tn);
+            } else if (sameNet(tn.getC1(), n2) && sameNet(tn.getC2(), n1)) {
+                result.add(tn);
+            }
+        }
+        return result;
+    }
+
+    public TransistorNode findSeriesTransistor(TransistorNode tn, Integer n1) {
+        NetNode net1 = netMap.get(n1);
+        if (net1 == null) {
+            throw new RuntimeException("Failed to lookup net " + n1);
+        }
+        Set<TransistorNode> ts = getConnectedTransistors(net1);
+        if (ts.size() == 2) {
+            if (!ts.remove(tn)) {
+                throw new RuntimeException("findSeriesTransistors: set did not contain " + tn.getId());
+            }
+            TransistorNode z = ts.iterator().next();
+            if (n1.equals(z.getC1()) || n1.equals(z.getC2())) {
+                return z;
+            }
+        }
+        return null;
+    }
+
+    public void detectGates() {
+        boolean done;
+        do {
+            done = true;
+            // Merge Parallel Transistors
+            for (CircuitNode node : graph.vertexSet()) {
+                if (node.isCombinable()) {
+                    TransistorNode t1 = (TransistorNode) node;
+                    System.out.println(t1.getId() + " " + t1.getC1() + " " + t1.getC2());
+                    Set<TransistorNode> parallel = findParallelTransistors(t1.getC1(), t1.getC2());
+                    if (!parallel.remove(t1)) {
+                        throw new RuntimeException("findParallelTransistors: set did not contain " + t1.getId());
+                    }
+                    if (!parallel.isEmpty()) {
+                        StringBuffer f = new StringBuffer();
+                        f.append("(");
+                        f.append(t1.getFunction());
+                        for (TransistorNode t2 : parallel) {
+                            // TODO - add edge from t1 to t2.gate net
+                            System.out.println("P Merging " + t2.getId() + " into " + t1.getId());
+                            f.append(" OR ");
+                            f.append(t2.getFunction());
+                            graph.removeVertex(t2);
+                        }
+                        f.append(")");
+                        done = false;
+                        t1.setFunction(f.toString());
+                        System.out.println(f.toString());
+                        break; // Avoids a concurrent modification exception at
+                               // the expense of some efficiency
+                    }
+                }
+            }
+            // Merge Series Transistors
+            for (CircuitNode node : graph.vertexSet()) {
+                if (node.isCombinable()) {
+                    Integer inner = null;
+                    TransistorNode t1 = (TransistorNode) node;
+                    TransistorNode t2 = null;
+                    Integer c1 = t1.getC1();                    
+                    Integer c2 = t1.getC2();
+                    if (t2 == null && c1 != null) {
+                        inner = c1;
+                        t2 = findSeriesTransistor(t1, inner);
+                    }
+                    if (t2 == null && c2 != null) {
+                        inner = c2;
+                        t2 = findSeriesTransistor(t1, inner);
+                    }
+                    if (t2 == null) {
+                        continue;
+                    }
+                    System.out.println("S Merging " + t2.getId() + " into " + t1.getId());
+                    StringBuffer f = new StringBuffer();
+                    f.append("(");
+                    f.append(t1.getFunction());
+                    f.append(" AND ");
+                    f.append(t2.getFunction());
+                    f.append(")");
+                    done = false;
+                    t1.setFunction(f.toString());
+                    System.out.println(f.toString());
+                    // Update connections
+                    Integer other = null;
+                    if (inner.equals(t2.getC1()) && !inner.equals(t2.getC2())) {
+                        other = t2.getC2();
+                    } else if (inner.equals(t2.getC2()) && !inner.equals(t2.getC1())) {
+                        other = t2.getC1();
+                    } else {
+                        throw new RuntimeException("t2 is not connected to inner");
+                    }
+                    System.out.println("Inner = " + inner + "; other = " + other);
+                    System.out.println(t1);
+                    System.out.println(t2);
+                    if (inner.equals(t1.getC1()) && !inner.equals(t1.getC2())) {
+                        t1.setC1(other);
+                    } else if (inner.equals(t1.getC2()) && !inner.equals(t1.getC1())) {
+                        t1.setC2(other);
+                    } else {
+                        throw new RuntimeException("t1 is not connected to inner");
+                    }
+                    System.out.println(t1);
+                    System.out.println(t2);
+                    if (other != null) {
+                        CircuitNode otherNet = netMap.get(other);
+                        if (otherNet == null) {
+                            throw new RuntimeException("Failed to lookup other net " + other);
+                        }
+                        graph.addEdge(t1, otherNet).setChannel();
+                        t1.setType(NodeType.VT_EFET);
+                    } else {
+                        t1.setType(NodeType.VT_EFET_VSS);
+                    }                    
+                    CircuitNode innerNet = netMap.get(inner);
+                    if (innerNet == null) {
+                        throw new RuntimeException("Failed to lookup inner net " + inner);
+                    }
+                    graph.removeAllEdges(t1, innerNet);
+                    graph.removeAllEdges(t2, innerNet);
+                    graph.removeVertex(t2);
+                    break; // Avoids a concurrent modification exception at
+                           // the expense of some efficiency
+                }
+            }
+
+        } while (!done);
     }
 
     public void replaceModule(Module mod) {
