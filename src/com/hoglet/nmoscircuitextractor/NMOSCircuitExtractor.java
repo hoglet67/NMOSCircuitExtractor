@@ -11,21 +11,24 @@ public class NMOSCircuitExtractor {
     public static void main(String args[]) {
         try {
 
-            Set<Integer> ignoreWarnings = new HashSet<Integer>();
-            ignoreWarnings.add(45);
-            ignoreWarnings.add(46);
-            ignoreWarnings.add(47);
-            ignoreWarnings.add(230);
-            ignoreWarnings.add(1061);
-            ignoreWarnings.add(2775);
-            ignoreWarnings.add(2776);
+            Set<String> ignoreWarnings = new HashSet<String>();
+            ignoreWarnings.add("45");
+            ignoreWarnings.add("46");
+            ignoreWarnings.add("47");
+            ignoreWarnings.add("230");
+            ignoreWarnings.add("1061");
+            ignoreWarnings.add("2775");
+            ignoreWarnings.add("2776");
 
             // Parse the Z80 into the main graph
             File transdefs = new File("transdefs.js");
             File segdefs = new File("segdefs.js");
+            File nodenames = new File("nodenames.js");
             CircuitGraphBuilder builder = new CircuitGraphBuilder(ignoreWarnings);
-            builder.readNetlist(transdefs, segdefs);
+            builder.readNetlist(transdefs, segdefs, nodenames);
             builder.buildPullupSet();
+            
+            // Note, in these pin definitions, the original number is no longer used
             builder.addPin("clk", EdgeType.OUTPUT, 3);
             builder.addPin("ab0", EdgeType.INPUT, 5);
             builder.addPin("ab1", EdgeType.INPUT, 6);

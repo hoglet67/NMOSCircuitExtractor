@@ -7,8 +7,8 @@ import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
 
 public class ModuleGen {
 
-    public static int net_vss = 1;
-    public static int net_vcc = 2;
+    public static String net_vss = "vss";
+    public static String net_vcc = "vcc";
 
     // Build a small subgraph that looks like the register cell
     public static Module registerModule() {

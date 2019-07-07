@@ -26,16 +26,17 @@ import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
 import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class CircuitGraphBuilder {
-    protected int net_vss = 1;
-    protected int net_vcc = 2;
-    protected Map<Integer, NetNode> netMap = new HashMap<Integer, NetNode>();
+    protected String net_vss = "vss";
+    protected String net_vcc = "vcc";
+
+    protected Map<String, NetNode> netMap = new HashMap<String, NetNode>();
     protected Set<String> pullupSet = new TreeSet<String>();
     protected Graph<CircuitNode, CircuitEdge> graph;
 
     protected Set<String> duplicate_map = new HashSet<String>();
-    protected Set<Integer> ignoreWarnings = new HashSet<>();
+    protected Set<String> ignoreWarnings = new HashSet<String>();
 
-    public CircuitGraphBuilder(Set<Integer> ignoreWarnings) {
+    public CircuitGraphBuilder(Set<String> ignoreWarnings) {
         this();
         this.ignoreWarnings.addAll(ignoreWarnings);
     }
@@ -44,19 +45,19 @@ public class CircuitGraphBuilder {
         graph = new DefaultDirectedGraph<CircuitNode, CircuitEdge>(CircuitEdge.class);
     }
 
-    private NetNode addNet(Integer net) {
+    private NetNode addNet(String net) {
         if (net == null) {
             throw new RuntimeException("Oops, tried to add null net");
         }
-        if (net == net_vss) {
+        if (net.equals(net_vss)) {
             throw new RuntimeException("Oops, tried to add VSS net");
         }
-        if (net == net_vcc) {
+        if (net.equals(net_vcc)) {
             throw new RuntimeException("Oops, tried to add VCC net");
         }
         NetNode netNode = netMap.get(net);
         if (netNode == null) {
-            netNode = new NetNode("" + net);
+            netNode = new NetNode(net);
             graph.addVertex(netNode);
             netMap.put(net, netNode);
         }
@@ -64,7 +65,7 @@ public class CircuitGraphBuilder {
         return netNode;
     }
 
-    private NetNode getNet(Integer net) {
+    private NetNode getNet(String net) {
         NetNode netNode = netMap.get(net);
         if (netNode == null) {
             throw new RuntimeException("Failed to lookup net " + net);
@@ -72,17 +73,25 @@ public class CircuitGraphBuilder {
         return netNode;
     }
 
-    private String getHash(TransistorNode tr, Integer gate, Integer c1, Integer c2) {
+    private String getHash(TransistorNode tr, String gate, String c1, String c2) {
         return tr.getType() + "_" + gate + "_" + c1 + "_" + c2;
     }
 
-    public NetNode addExternal(int ext) {
+    public NetNode addExternal(Integer ext) {
+        return addExternal("" + ext);
+    }
+
+    public NetNode addExternal(String ext) {
         NetNode net = addNet(ext);
         net.setAsExternal();
         return net;
     }
 
-    public TransistorNode addPullup(String id, int net) {
+    public TransistorNode addPullup(String id, Integer net) {
+        return addPullup(id, "" + net);
+    }
+
+    public TransistorNode addPullup(String id, String net) {
         TransistorNode tr = new TransistorNode(NodeType.VT_DPULLUP, id);
         String hash = getHash(tr, net, null, null);
         if (duplicate_map.contains(hash)) {
@@ -97,94 +106,106 @@ public class CircuitGraphBuilder {
     }
 
     public void addPin(String name, EdgeType type, Integer net) {
+        addPin(name, type, name);
+    }
+
+    public void addPin(String name, EdgeType type, String net) {
         PinNode pinNode = new PinNode(name);
         NetNode netNode = getNet(net);
         graph.addVertex(pinNode);
         graph.addEdge(pinNode, netNode).setType(type);
     }
 
-    public TransistorNode addTransistor(String id, int gateNet, int channel1Net, int channel2Net) {
+    public TransistorNode addTransistor(String id, Integer gateNet, Integer channel1Net, Integer channel2Net) {
+        return addTransistor(id, "" + gateNet, "" + channel1Net, "" + channel2Net);
+    }
+
+    public TransistorNode addTransistor(String id, Integer gateNet, Integer channel1Net, String channel2Net) {
+        return addTransistor(id, "" + gateNet, "" + channel1Net, channel2Net);
+    }
+
+    public TransistorNode addTransistor(String id, String gateNet, String channel1Net, String channel2Net) {
         TransistorNode tr;
 
         // Known trap transistor (removed from netlist)
-        if (gateNet == net_vss && channel1Net == net_vss && channel2Net == net_vss) {
+        if (gateNet.equals(net_vss) && channel1Net.equals(net_vss) && channel2Net.equals(net_vss)) {
             System.out.println("Skipping transistor (g=vss, c1=vss, c2=vss): " + id);
             return null;
         }
 
-        if (gateNet == net_vcc && channel1Net == net_vcc && channel2Net == net_vcc) {
+        if (gateNet.equals(net_vcc) && channel1Net.equals(net_vcc) && channel2Net.equals(net_vcc)) {
             System.out.println("Skipping transistor (g=vcc, c1=vcc, c2=vcc): " + id);
             return null;
         }
 
-        if (channel1Net == net_vss && channel2Net == net_vss) {
+        if (channel1Net.equals(net_vss) && channel2Net.equals(net_vss)) {
             System.out.println("Skipping transistor (c1=vss, c2=vss): " + id);
             return null;
         }
 
-        if (channel1Net == net_vcc && channel2Net == net_vcc) {
+        if (channel1Net.equals(net_vcc) && channel2Net.equals(net_vcc)) {
             System.out.println("Skipping transistor (c1=vcc, c2=vcc): " + id);
             return null;
         }
 
-        Integer gate = null;
-        Integer c1 = null;
-        Integer c2 = null;
+        String gate = null;
+        String c1 = null;
+        String c2 = null;
 
         // Enhancement Pullup
-        if (gateNet == net_vcc && channel1Net == net_vcc) {
+        if (gateNet.equals(net_vcc) && channel1Net.equals(net_vcc)) {
 
             tr = new TransistorNode(NodeType.VT_EPULLUP, id);
             c1 = channel2Net;
 
-        } else if (gateNet == net_vcc && channel2Net == net_vcc) {
+        } else if (gateNet.equals(net_vcc) && channel2Net.equals(net_vcc)) {
 
             tr = new TransistorNode(NodeType.VT_EPULLUP, id);
             c1 = channel1Net;
 
         } else {
 
-            if (gateNet == net_vss) {
+            if (gateNet.equals(net_vss)) {
                 System.out.println("Skipping transistor (g=vss): " + id);
                 return null;
             }
 
-            if (gateNet == net_vcc) {
+            if (gateNet.equals(net_vcc)) {
                 System.out.println("Skipping transistor (g=vcc): " + id);
                 return null;
             }
 
-            if (gateNet == channel1Net) {
+            if (gateNet.equals(channel1Net)) {
                 System.out.println("Skipping transistor (g=c1): " + id);
                 return null;
             }
 
-            if (gateNet == channel2Net) {
+            if (gateNet.equals(channel2Net)) {
                 System.out.println("Skipping transistor (g=c2): " + id);
                 return null;
             }
-            if (channel1Net == channel2Net) {
+            if (channel1Net.equals(channel2Net)) {
                 System.out.println("Skipping transistor (c1=c2): " + id);
                 return null;
             }
 
             gate = gateNet;
-            if (channel1Net == net_vss) {
+            if (channel1Net.equals(net_vss)) {
                 tr = new TransistorNode(NodeType.VT_EFET_VSS, id);
                 c1 = channel2Net;
-            } else if (channel2Net == net_vss) {
+            } else if (channel2Net.equals(net_vss)) {
                 tr = new TransistorNode(NodeType.VT_EFET_VSS, id);
                 c1 = channel1Net;
-            } else if (channel1Net == net_vcc) {
+            } else if (channel1Net.equals(net_vcc)) {
                 tr = new TransistorNode(NodeType.VT_EFET_VCC, id);
                 c1 = channel2Net;
-            } else if (channel2Net == net_vcc) {
+            } else if (channel2Net.equals(net_vcc)) {
                 tr = new TransistorNode(NodeType.VT_EFET_VCC, id);
                 c1 = channel1Net;
             } else {
                 tr = new TransistorNode(NodeType.VT_EFET, id);
-                c1 = channel1Net <= channel2Net ? channel1Net : channel2Net;
-                c2 = channel1Net <= channel2Net ? channel2Net : channel1Net;
+                c1 = channel1Net.compareTo(channel2Net) <= 0 ? channel1Net : channel2Net;
+                c2 = channel1Net.compareTo(channel2Net) <= 0 ? channel2Net : channel1Net;
             }
         }
         String hash = getHash(tr, gate, c1, c2);
@@ -212,8 +233,27 @@ public class CircuitGraphBuilder {
         return tr;
     }
 
-    public Graph<CircuitNode, CircuitEdge> readNetlist(File transdefs, File segdefs) throws IOException {
+    public Graph<CircuitNode, CircuitEdge> readNetlist(File transdefs, File segdefs, File nodenames) throws IOException {
         String line;
+
+        Map<String, String> nameMap = new HashMap<String, String>();
+
+        BufferedReader namesReader = new BufferedReader(new FileReader(nodenames));
+        while ((line = namesReader.readLine()) != null) {
+            // vss: 1,
+            String parts[] = line.split("[,:]");
+            if (parts.length == 2) {
+                String netName = parts[0].trim();
+                String netNum = parts[1].trim();
+                if (!nameMap.containsKey(netNum)) {
+                    nameMap.put(netNum, netName);
+                    System.out.println(netNum + " => " + netName);
+                } else {
+                    System.out.println("Ignoring duplicate mapping of " + netNum + " as " + netName);
+                }
+            }
+        }
+        namesReader.close();
 
         // Each line in transdefs represents a transistor
 
@@ -224,9 +264,19 @@ public class CircuitGraphBuilder {
                 String parts[] = line.split(",");
 
                 String tr = parts[0].replace("'", "").replace("[", "");
-                int gateNet = Integer.parseInt(parts[1]);
-                int channel1Net = Integer.parseInt(parts[2]);
-                int channel2Net = Integer.parseInt(parts[3]);
+                String gateNet = parts[1].trim();
+                String channel1Net = parts[2].trim();
+                String channel2Net = parts[3].trim();
+
+                if (nameMap.containsKey(gateNet)) {
+                    gateNet = nameMap.get(gateNet);
+                }
+                if (nameMap.containsKey(channel1Net)) {
+                    channel1Net = nameMap.get(channel1Net);
+                }
+                if (nameMap.containsKey(channel2Net)) {
+                    channel2Net = nameMap.get(channel2Net);
+                }
 
                 addTransistor(tr, gateNet, channel1Net, channel2Net);
 
@@ -236,20 +286,23 @@ public class CircuitGraphBuilder {
 
         // Each line in segdefs represents a possible pullup
 
-        Set<Integer> pullupList = new TreeSet<Integer>();
+        Set<String> pullupList = new TreeSet<String>();
         BufferedReader segReader = new BufferedReader(new FileReader(segdefs));
         while ((line = segReader.readLine()) != null) {
             // [52,'+',0,3872,4814,3925,4814,3925,4737,3941,4737,3941,4727,3917,4727,3917,4805,3872,4805],
             if (line.startsWith("[")) {
                 String parts[] = line.split(",");
                 if (parts[1].contains("+")) {
-                    Integer net = Integer.parseInt(parts[0].replace("[", "").trim());
+                    String net = parts[0].replace("[", "").trim();
+                    if (nameMap.containsKey(net)) {
+                        net = nameMap.get(net);
+                    }
                     pullupList.add(net);
                 }
             }
         }
         segReader.close();
-        for (Integer net : pullupList) {
+        for (String net : pullupList) {
             if (!netMap.containsKey(net)) {
                 System.out.println("Warning: pullup on unused net " + net);
             }
@@ -297,16 +350,16 @@ public class CircuitGraphBuilder {
 
     public void validateGraph() {
         int count = 0;
-        Set<Integer> nets = new TreeSet<Integer>();
+        Set<String> nets = new TreeSet<String>();
         for (CircuitNode node : graph.vertexSet()) {
             if (node.getType() == NodeType.VT_NET) {
-                Integer net = Integer.parseInt(node.getId());
+                String net = node.getId();
                 if (!ignoreWarnings.contains(net)) {
                     nets.add(net);
                 }
             }
         }
-        for (Integer net : nets) {
+        for (String net : nets) {
             CircuitNode node = netMap.get(net);
             Set<CircuitEdge> edges = graph.incomingEdgesOf(node);
             int n_channel = 0;
@@ -381,35 +434,35 @@ public class CircuitGraphBuilder {
         return result;
     }
 
-    private static boolean sameNet(Integer n1, Integer n2) {
+    private static boolean sameNet(String n1, String n2) {
         if (n1 != null && n2 != null) {
             return n1.equals(n2);
         }
         return n1 == null && n2 == null;
     }
 
-    private Set<Integer> getConnections(CircuitNode tn, EdgeType type) {
-        Set<Integer> nets = new HashSet<Integer>();
+    private Set<String> getConnections(CircuitNode tn, EdgeType type) {
+        Set<String> nets = new HashSet<String>();
         for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
             if (edge.getType() == type) {
                 CircuitNode target = graph.getEdgeTarget(edge);
                 if (target.getType() != NodeType.VT_NET) {
                     throw new RuntimeException("Corrupt graph");
                 }
-                nets.add(Integer.parseInt(target.getId()));
+                nets.add(target.getId());
             }
         }
         return nets;
     }
 
-    private Integer getC1(TransistorNode tn) {
-        Set<Integer> nets = getConnections(tn, EdgeType.CHANNEL);
+    private String getC1(TransistorNode tn) {
+        Set<String> nets = getConnections(tn, EdgeType.CHANNEL);
         if (tn.getType() == NodeType.VT_EFET) {
             if (nets.size() == 2) {
-                Iterator<Integer> it = nets.iterator();
-                Integer c1 = it.next();
-                Integer c2 = it.next();
-                return c1 < c2 ? c1 : c2;
+                Iterator<String> it = nets.iterator();
+                String c1 = it.next();
+                String c2 = it.next();
+                return c1.compareTo(c2) < 0 ? c1 : c2;
             }
         } else if (tn.getType() == NodeType.VT_EFET_VSS) {
             if (nets.size() == 1) {
@@ -419,14 +472,14 @@ public class CircuitGraphBuilder {
         throw new RuntimeException("Corrupt graph:" + tn + "; nets = " + nets);
     }
 
-    private Integer getC2(TransistorNode tn) {
-        Set<Integer> nets = getConnections(tn, EdgeType.CHANNEL);
+    private String getC2(TransistorNode tn) {
+        Set<String> nets = getConnections(tn, EdgeType.CHANNEL);
         if (tn.getType() == NodeType.VT_EFET) {
             if (nets.size() == 2) {
-                Iterator<Integer> it = nets.iterator();
-                Integer c1 = it.next();
-                Integer c2 = it.next();
-                return c1 < c2 ? c2 : c1;
+                Iterator<String> it = nets.iterator();
+                String c1 = it.next();
+                String c2 = it.next();
+                return c1.compareTo(c2) < 0 ? c2 : c1;
             }
         } else if (tn.getType() == NodeType.VT_EFET_VSS) {
             if (nets.size() == 1) {
@@ -436,9 +489,9 @@ public class CircuitGraphBuilder {
         throw new RuntimeException("Corrupt graph:" + tn + "; nets =" + nets);
     }
 
-    private Set<TransistorNode> findParallelTransistors(Integer n1, Integer n2) {
+    private Set<TransistorNode> findParallelTransistors(String n1, String n2) {
         HashSet<TransistorNode> result = new HashSet<TransistorNode>();
-        Integer n = n1 != null ? n1 : n2;
+        String n = n1 != null ? n1 : n2;
         for (CircuitNode cn : getNeighbours(getNet(n))) {
             if (cn.isCombinable()) {
                 TransistorNode tn = (TransistorNode) cn;
@@ -452,7 +505,7 @@ public class CircuitGraphBuilder {
         return result;
     }
 
-    private TransistorNode findSeriesTransistor(TransistorNode tn, Integer n1) {
+    private TransistorNode findSeriesTransistor(TransistorNode tn, String n1) {
         Set<CircuitNode> ts = getNeighbours(getNet(n1));
         if (ts.size() == 2) {
             if (!ts.remove(tn)) {
@@ -469,7 +522,7 @@ public class CircuitGraphBuilder {
         return null;
     }
 
-    private void dumpConnections(PrintStream ps, String message, Set<Integer> nets) {
+    private void dumpConnections(PrintStream ps, String message, Set<String> nets) {
         if (nets.size() == 0) {
             return;
         }
@@ -477,7 +530,7 @@ public class CircuitGraphBuilder {
         sb.append(message);
         sb.append(": [");
         boolean first = true;
-        for (Integer net : nets) {
+        for (String net : nets) {
             if (!first) {
                 sb.append(", ");
             }
@@ -505,7 +558,7 @@ public class CircuitGraphBuilder {
     }
 
     public void copyGateEdges(CircuitNode t1, CircuitNode t2) {
-        for (Integer gate : getConnections(t2, EdgeType.GATE)) {
+        for (String gate : getConnections(t2, EdgeType.GATE)) {
             CircuitEdge edge = graph.addEdge(t1, getNet(gate));
             if (edge != null) {
                 edge.setType(EdgeType.GATE);
@@ -549,11 +602,11 @@ public class CircuitGraphBuilder {
             // Merge Series Transistors
             for (CircuitNode node : graph.vertexSet()) {
                 if (node.isCombinable()) {
-                    Integer inner = null;
+                    String inner = null;
                     TransistorNode t1 = (TransistorNode) node;
                     TransistorNode t2 = null;
-                    Integer c1 = getC1(t1);
-                    Integer c2 = getC2(t1);
+                    String c1 = getC1(t1);
+                    String c2 = getC2(t1);
                     if (t2 == null && c1 != null) {
                         inner = c1;
                         t2 = findSeriesTransistor(t1, inner);
@@ -575,9 +628,9 @@ public class CircuitGraphBuilder {
                     f.append(")");
                     t1.setFunction(f.toString());
                     // Update connections
-                    Integer other = null;
-                    Integer t2c1 = getC1(t2);
-                    Integer t2c2 = getC2(t2);
+                    String other = null;
+                    String t2c1 = getC1(t2);
+                    String t2c2 = getC2(t2);
                     if (inner.equals(t2c1) && !inner.equals(t2c2)) {
                         other = t2c2;
                     } else if (inner.equals(t2c2) && !inner.equals(t2c1)) {
