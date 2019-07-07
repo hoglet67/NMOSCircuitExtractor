@@ -271,13 +271,50 @@ public class CircuitGraphBuilder {
 
     public void validateGraph() {
         int count = 0;
+        Set<Integer> nets = new TreeSet<Integer>();
         for (CircuitNode node : graph.vertexSet()) {
             if (node.getType() == NodeType.VT_NET) {
-                Set<CircuitEdge> edges = graph.incomingEdgesOf(node);
-                if (edges.size() < 2) {
-                    System.out.println("Warning: net  " + node.getId() + " has only " + edges.size() + " connections");
-                    count++;
+                nets.add(Integer.parseInt(node.getId()));
+            }
+        }
+        for (Integer net : nets) {
+            CircuitNode node = netMap.get(net);
+            Set<CircuitEdge> edges = graph.incomingEdgesOf(node);
+            int n_channel = 0;
+            int n_output = 0;
+            int n_bidirectional = 0;
+            int fanout = edges.size();
+            for (CircuitEdge edge : edges) {
+                switch (edge.getType()) {
+                case CHANNEL:
+                    n_channel++;
+                    break;
+                case OUTPUT:
+                    n_output++;
+                    break;
+                case BIDIRECTIONAL:
+                    n_bidirectional++;
+                    break;
+                default:
                 }
+            }
+            if (edges.size() == 0) {
+                System.out.println("Warning: net  " + node.getId() + " has no connections");
+                count++;
+            } else if (edges.size() == 1) {
+                CircuitEdge edge = edges.iterator().next();
+                CircuitNode target = graph.getEdgeSource(edge);
+                System.out.println("Warning: net  " + node.getId() + " has only one connection [to " + target + " "
+                        + edge.getType().name() + "]");
+                count++;
+            }
+            if (n_channel + n_output + n_bidirectional == 0) {
+                System.out.println("Warning: net  " + node.getId() + " (fanout = " + fanout + ") has no drivers");
+                count++;
+            } else if (n_output > 1) {
+                System.out.println("Warning: net  " + node.getId() + " (fanout = " + fanout + ") has multiple output drivers ("
+                        + n_output + ")");
+                count++;
             }
         }
         System.out.println("Validation: " + count + " warnings");

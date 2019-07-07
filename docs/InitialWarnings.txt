@@ -1,0 +1,26 @@
+These are actualling input pins:
+Warning: net  3 (fanout = 403) has no drivers
+Warning: net  21 has only one connection [to t6435(VT_EFET_VSS) GATE]
+Warning: net  21 (fanout = 1) has no drivers
+Warning: net  22 has only one connection [to t3491(VT_EFET_VSS) GATE]
+Warning: net  22 (fanout = 1) has no drivers
+Warning: net  23 has only one connection [to t3832(VT_EFET_VSS) GATE]
+Warning: net  23 (fanout = 1) has no drivers
+Warning: net  24 has only one connection [to t3144(VT_EFET_VSS) GATE]
+Warning: net  24 (fanout = 1) has no drivers
+Warning: net  25 has only one connection [to t3479(VT_EFET_VSS) GATE]
+Warning: net  25 (fanout = 1) has no drivers
+
+There are a disconnected structure in the bottom left corner:
+Warning: net  45 (fanout = 2) has no drivers
+Warning: net  46 has only one connection [to t2638(VT_EFET_VCC) CHANNEL]
+Warning: net  47 has only one connection [to t6809(VT_EFET_VSS) CHANNEL]
+
+This looks like a missing bit of metal that is a last minute metal fix:
+Warning: net  230 has only one connection [to t3532(VT_EFET_VSS) CHANNEL]
+
+There are a disconnected structure in the top right corner:
+Warning: net  1061 has only one connection [to t7180(VT_EFET) GATE]
+Warning: net  1061 (fanout = 1) has no drivers
+Warning: net  2775 has only one connection [to t7180(VT_EFET) CHANNEL]
+Warning: net  2776 has only one connection [to t7180(VT_EFET) CHANNEL]

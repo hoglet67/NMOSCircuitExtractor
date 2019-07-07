@@ -21,16 +21,17 @@ public abstract class CircuitNode {
     public void setType(NodeType type) {
         this.type = type;
     }
-    
+
     public String getId() {
         return id;
     }
-    
+
     public boolean isCombinable() {
         return type == NodeType.VT_EFET || type == NodeType.VT_EFET_VSS;
     }
-    
+
     public String toString() {
         return id;
     }
+
 }
