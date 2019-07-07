@@ -3,7 +3,7 @@ package com.hoglet.nmoscircuitextractor;
 public abstract class CircuitNode {
 
     public enum NodeType {
-        VT_NET, VT_NET_EXT, VT_EFET, VT_EFET_VCC, VT_EFET_VSS, VT_DPULLUP, VT_EPULLUP, VT_MODULE, VT_NUM_TYPES,
+        VT_NET, VT_NET_EXT, VT_EFET_VSS, VT_EFET, VT_EFET_VCC, VT_EPULLUP, VT_DPULLUP, VT_MODULE, VT_PIN, VT_NUM_TYPES,
     }
 
     private NodeType type;

@@ -2,8 +2,10 @@ package com.hoglet.nmoscircuitextractor;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,6 +33,12 @@ public class CircuitGraphBuilder {
     protected Graph<CircuitNode, CircuitEdge> graph;
 
     protected Set<String> duplicate_map = new HashSet<String>();
+    protected Set<Integer> ignoreWarnings = new HashSet<>();
+
+    public CircuitGraphBuilder(Set<Integer> ignoreWarnings) {
+        this();
+        this.ignoreWarnings.addAll(ignoreWarnings);
+    }
 
     public CircuitGraphBuilder() {
         graph = new DefaultDirectedGraph<CircuitNode, CircuitEdge>(CircuitEdge.class);
@@ -86,6 +94,13 @@ public class CircuitGraphBuilder {
         CircuitNode netNode = addNet(net);
         graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
         return tr;
+    }
+
+    public void addPin(String name, EdgeType type, Integer net) {
+        PinNode pinNode = new PinNode(name);
+        NetNode netNode = getNet(net);
+        graph.addVertex(pinNode);
+        graph.addEdge(pinNode, netNode).setType(type);
     }
 
     public TransistorNode addTransistor(String id, int gateNet, int channel1Net, int channel2Net) {
@@ -261,11 +276,22 @@ public class CircuitGraphBuilder {
         }
     }
 
-    public void dumpGraph() {
-        for (CircuitNode node : graph.vertexSet()) {
-            if (node.getType() != NodeType.VT_NET) {
-                dumpNode(node);
+    public void dumpGraph(File file) {
+        try {
+            PrintStream ps = new PrintStream(new FileOutputStream(file));
+            for (NodeType type : NodeType.values()) {
+                if (type == NodeType.VT_NET) {
+                    continue;
+                }
+                for (CircuitNode node : graph.vertexSet()) {
+                    if (node.getType() == type) {
+                        dumpNode(ps, node);
+                    }
+                }
             }
+            ps.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -274,7 +300,10 @@ public class CircuitGraphBuilder {
         Set<Integer> nets = new TreeSet<Integer>();
         for (CircuitNode node : graph.vertexSet()) {
             if (node.getType() == NodeType.VT_NET) {
-                nets.add(Integer.parseInt(node.getId()));
+                Integer net = Integer.parseInt(node.getId());
+                if (!ignoreWarnings.contains(net)) {
+                    nets.add(net);
+                }
             }
         }
         for (Integer net : nets) {
@@ -440,7 +469,7 @@ public class CircuitGraphBuilder {
         return null;
     }
 
-    private void dumpConnections(String message, Set<Integer> nets) {
+    private void dumpConnections(PrintStream ps, String message, Set<Integer> nets) {
         if (nets.size() == 0) {
             return;
         }
@@ -459,19 +488,19 @@ public class CircuitGraphBuilder {
             first = false;
         }
         sb.append(']');
-        System.out.println(sb.toString());
+        ps.println(sb.toString());
     }
 
-    private void dumpNode(CircuitNode tn) {
-        System.out.println(tn);
-        dumpConnections("             gate", getConnections(tn, EdgeType.GATE));
-        dumpConnections("          channel", getConnections(tn, EdgeType.CHANNEL));
-        dumpConnections("            input", getConnections(tn, EdgeType.INPUT));
-        dumpConnections("           output", getConnections(tn, EdgeType.OUTPUT));
-        dumpConnections("    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
-        dumpConnections("      unspecified", getConnections(tn, EdgeType.UNSPECIFIED));
-        if (tn instanceof TransistorNode) {
-            System.out.println("               fn: " + ((TransistorNode) tn).getFunction());
+    private void dumpNode(PrintStream ps, CircuitNode tn) {
+        ps.println(tn);
+        dumpConnections(ps, "             gate", getConnections(tn, EdgeType.GATE));
+        dumpConnections(ps, "          channel", getConnections(tn, EdgeType.CHANNEL));
+        dumpConnections(ps, "            input", getConnections(tn, EdgeType.INPUT));
+        dumpConnections(ps, "           output", getConnections(tn, EdgeType.OUTPUT));
+        dumpConnections(ps, "    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
+        dumpConnections(ps, "      unspecified", getConnections(tn, EdgeType.UNSPECIFIED));
+        if (tn.getType() == NodeType.VT_EFET || tn.getType() == NodeType.VT_EFET_VSS) {
+            ps.println("               fn: " + ((TransistorNode) tn).getFunction());
         }
     }
 
