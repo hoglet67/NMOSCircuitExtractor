@@ -11,23 +11,21 @@ public class NMOSCircuitExtractor {
     public static void main(String args[]) {
         try {
 
-            Set<String> ignoreWarnings = new HashSet<String>();
-            ignoreWarnings.add("45");
-            ignoreWarnings.add("46");
-            ignoreWarnings.add("47");
-            ignoreWarnings.add("230");
-            ignoreWarnings.add("1061");
-            ignoreWarnings.add("2775");
-            ignoreWarnings.add("2776");
+            Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
+            ignoreWarnings.add(new NetNode("45"));
+            ignoreWarnings.add(new NetNode("46"));
+            ignoreWarnings.add(new NetNode("47"));
+            ignoreWarnings.add(new NetNode("230"));
+            ignoreWarnings.add(new NetNode("1061"));
+            ignoreWarnings.add(new NetNode("2775"));
+            ignoreWarnings.add(new NetNode("2776"));
 
             // Parse the Z80 into the main graph
             File transdefs = new File("transdefs.js");
             File segdefs = new File("segdefs.js");
             File nodenames = new File("nodenames.js");
-            CircuitGraphBuilder builder = new CircuitGraphBuilder(ignoreWarnings);
+            CircuitGraphBuilder builder = new CircuitGraphBuilder();
             builder.readNetlist(transdefs, segdefs, nodenames);
-            builder.buildPullupSet();
-            
             // Note, in these pin definitions, the original number is no longer used
             builder.addPin("clk", EdgeType.OUTPUT, 3);
             builder.addPin("ab0", EdgeType.INPUT, 5);
@@ -67,26 +65,34 @@ public class NMOSCircuitExtractor {
             builder.addPin("db7", EdgeType.BIDIRECTIONAL, 39);
             builder.addPin("_halt", EdgeType.INPUT, 40);
             builder.addPin("_busak", EdgeType.INPUT, 41);
-            builder.dumpStats();
-            builder.validateGraph();
-            builder.dumpGraph(new File("netlist1.txt"));
+
+            
+            
+            
+            CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), ignoreWarnings);
+            
+            reducer.buildPullupSet();
+            
+            reducer.dumpStats();
+            reducer.validateGraph();
+            reducer.dumpGraph(new File("netlist1.txt"));
 
             // Remove some known modules
             System.out.println("Replacing modules");
             for (Module mod : ModuleGen.getModules()) {
-                builder.replaceModule(mod);
+                reducer.replaceModule(mod);
             }
-            builder.dumpStats();
-            builder.validateGraph();
+            reducer.dumpStats();
+            reducer.validateGraph();
             // Log the final graph
-            builder.dumpGraph(new File("netlist2.txt"));
+            reducer.dumpGraph(new File("netlist2.txt"));
 
             // Try to detect gates
             System.out.println("Combining transistors into gates");
-            builder.detectGates();
-            builder.dumpStats();
-            builder.validateGraph();
-            builder.dumpGraph(new File("netlist3.txt"));
+            reducer.detectGates();
+            reducer.dumpStats();
+            reducer.validateGraph();
+            reducer.dumpGraph(new File("netlist3.txt"));
 
         } catch (Exception e) {
             e.printStackTrace();

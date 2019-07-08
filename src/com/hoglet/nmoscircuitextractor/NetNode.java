@@ -16,8 +16,4 @@ public class NetNode extends CircuitNode {
     public void incDegree() {
         degree++;
     }
-
-    public void setAsExternal() {
-        setType(NodeType.VT_NET_EXT);
-    }
 }
