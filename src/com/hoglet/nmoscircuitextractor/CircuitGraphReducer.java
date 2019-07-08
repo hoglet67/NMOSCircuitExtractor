@@ -34,6 +34,7 @@ public class CircuitGraphReducer {
     public CircuitGraphReducer(Graph<CircuitNode, CircuitEdge> graph, Set<NetNode> ignoreWarnings) {
         this.graph = graph;
         this.ignoreWarnings.addAll(ignoreWarnings);
+        buildPullupSet();
     }
 
     public void dumpStats() {
@@ -120,7 +121,7 @@ public class CircuitGraphReducer {
         System.out.println("Validation: " + count + " warnings");
     }
 
-    public void buildPullupSet() {
+    private void buildPullupSet() {
         System.out.println("Building pullup set");
         for (CircuitNode node : graph.vertexSet()) {
             if (node.getType() == NodeType.VT_NET) {
@@ -275,11 +276,11 @@ public class CircuitGraphReducer {
         }
     }
 
-    public void copyGateEdges(CircuitNode t1, CircuitNode t2) {
-        for (NetNode gate : getConnections(t2, EdgeType.GATE)) {
-            CircuitEdge edge = graph.addEdge(t1, gate);
+    private void copyEdges(TransistorNode t1, TransistorNode t2, EdgeType type) {
+        for (NetNode net : getConnections(t2, type)) {
+            CircuitEdge edge = graph.addEdge(t1, net);
             if (edge != null) {
-                edge.setType(EdgeType.GATE);
+                edge.setType(type);
             }
         }
     }
@@ -306,7 +307,7 @@ public class CircuitGraphReducer {
                             f.append(" OR ");
                             f.append(t2.getFunction());
                             // Move T2 gate connections to T1
-                            copyGateEdges(t1, t2);
+                            copyEdges(t1, t2, EdgeType.GATE);
                             graph.removeVertex(t2);
                         }
                         f.append(")");
@@ -368,7 +369,7 @@ public class CircuitGraphReducer {
                         graph.addEdge(t1, other).setType(EdgeType.CHANNEL);
                     }
                     // Move T2 gate connections to T1
-                    copyGateEdges(t1, t2);
+                    copyEdges(t1, t2, EdgeType.GATE);
                     graph.removeVertex(t2);
                     graph.removeVertex(inner);
                     done = false;

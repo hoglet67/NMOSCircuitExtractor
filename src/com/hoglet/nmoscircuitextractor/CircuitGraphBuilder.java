@@ -89,13 +89,9 @@ public class CircuitGraphBuilder {
         return tr;
     }
 
-    public void addPin(String name, EdgeType type, Integer net) {
-        addPin(name, type, name);
-    }
-
-    public void addPin(String name, EdgeType type, String net) {
+    public void addPin(String name, EdgeType type) {
         PinNode pinNode = new PinNode(name);
-        NetNode netNode = getNet(net);
+        NetNode netNode = getNet(name);
         graph.addVertex(pinNode);
         graph.addEdge(pinNode, netNode).setType(type);
     }

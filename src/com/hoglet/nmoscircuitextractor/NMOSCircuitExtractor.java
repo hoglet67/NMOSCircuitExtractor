@@ -12,6 +12,8 @@ public class NMOSCircuitExtractor {
         try {
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
+            
+            // See docs/InitialWarnings.txt for what each of these is
             ignoreWarnings.add(new NetNode("45"));
             ignoreWarnings.add(new NetNode("46"));
             ignoreWarnings.add(new NetNode("47"));
@@ -26,53 +28,52 @@ public class NMOSCircuitExtractor {
             File nodenames = new File("nodenames.js");
             CircuitGraphBuilder builder = new CircuitGraphBuilder();
             builder.readNetlist(transdefs, segdefs, nodenames);
-            // Note, in these pin definitions, the original number is no longer used
-            builder.addPin("clk", EdgeType.OUTPUT, 3);
-            builder.addPin("ab0", EdgeType.INPUT, 5);
-            builder.addPin("ab1", EdgeType.INPUT, 6);
-            builder.addPin("ab2", EdgeType.INPUT, 7);
-            builder.addPin("ab3", EdgeType.INPUT, 8);
-            builder.addPin("ab4", EdgeType.INPUT, 9);
-            builder.addPin("ab5", EdgeType.INPUT, 10);
-            builder.addPin("ab6", EdgeType.INPUT, 11);
-            builder.addPin("ab7", EdgeType.INPUT, 12);
-            builder.addPin("ab8", EdgeType.INPUT, 13);
-            builder.addPin("ab9", EdgeType.INPUT, 14);
-            builder.addPin("ab10", EdgeType.INPUT, 15);
-            builder.addPin("ab11", EdgeType.INPUT, 16);
-            builder.addPin("ab12", EdgeType.INPUT, 17);
-            builder.addPin("ab13", EdgeType.INPUT, 18);
-            builder.addPin("ab14", EdgeType.INPUT, 19);
-            builder.addPin("ab15", EdgeType.INPUT, 20);
-            builder.addPin("_reset", EdgeType.OUTPUT, 21);
-            builder.addPin("_wait", EdgeType.OUTPUT, 22);
-            builder.addPin("_int", EdgeType.OUTPUT, 23);
-            builder.addPin("_nmi", EdgeType.OUTPUT, 24);
-            builder.addPin("_busrq", EdgeType.OUTPUT, 25);
-            builder.addPin("_m1", EdgeType.INPUT, 26);
-            builder.addPin("_rd", EdgeType.INPUT, 27);
-            builder.addPin("_wr", EdgeType.INPUT, 28);
-            builder.addPin("_mreq", EdgeType.INPUT, 29);
-            builder.addPin("_iorq", EdgeType.INPUT, 30);
-            builder.addPin("_rfsh", EdgeType.INPUT, 31);
-            builder.addPin("db0", EdgeType.BIDIRECTIONAL, 32);
-            builder.addPin("db1", EdgeType.BIDIRECTIONAL, 33);
-            builder.addPin("db2", EdgeType.BIDIRECTIONAL, 34);
-            builder.addPin("db3", EdgeType.BIDIRECTIONAL, 35);
-            builder.addPin("db4", EdgeType.BIDIRECTIONAL, 36);
-            builder.addPin("db5", EdgeType.BIDIRECTIONAL, 37);
-            builder.addPin("db6", EdgeType.BIDIRECTIONAL, 38);
-            builder.addPin("db7", EdgeType.BIDIRECTIONAL, 39);
-            builder.addPin("_halt", EdgeType.INPUT, 40);
-            builder.addPin("_busak", EdgeType.INPUT, 41);
 
+            // Note, in these pin definitions, the edge indicates the connection
+            // of the pin to the internal circuitry, so is the opposite of what
+            // might be expected. e.g. An input pin is connected with an OUTPUT edge
+            // because it drives internal signal.
             
-            
-            
+            builder.addPin("clk", EdgeType.OUTPUT);
+            builder.addPin("ab0", EdgeType.INPUT);
+            builder.addPin("ab1", EdgeType.INPUT);
+            builder.addPin("ab2", EdgeType.INPUT);
+            builder.addPin("ab3", EdgeType.INPUT);
+            builder.addPin("ab4", EdgeType.INPUT);
+            builder.addPin("ab5", EdgeType.INPUT);
+            builder.addPin("ab6", EdgeType.INPUT);
+            builder.addPin("ab7", EdgeType.INPUT);
+            builder.addPin("ab8", EdgeType.INPUT);
+            builder.addPin("ab9", EdgeType.INPUT);
+            builder.addPin("ab10", EdgeType.INPUT);
+            builder.addPin("ab11", EdgeType.INPUT);
+            builder.addPin("ab12", EdgeType.INPUT);
+            builder.addPin("ab13", EdgeType.INPUT);
+            builder.addPin("ab14", EdgeType.INPUT);
+            builder.addPin("ab15", EdgeType.INPUT);
+            builder.addPin("_reset", EdgeType.OUTPUT);
+            builder.addPin("_wait", EdgeType.OUTPUT);
+            builder.addPin("_int", EdgeType.OUTPUT);
+            builder.addPin("_nmi", EdgeType.OUTPUT);
+            builder.addPin("_busrq", EdgeType.OUTPUT);
+            builder.addPin("_m1", EdgeType.INPUT);
+            builder.addPin("_rd", EdgeType.INPUT);
+            builder.addPin("_wr", EdgeType.INPUT);
+            builder.addPin("_mreq", EdgeType.INPUT);
+            builder.addPin("_iorq", EdgeType.INPUT);
+            builder.addPin("_rfsh", EdgeType.INPUT);
+            builder.addPin("db0", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db1", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db2", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db3", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db4", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db5", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db6", EdgeType.BIDIRECTIONAL);
+            builder.addPin("db7", EdgeType.BIDIRECTIONAL);
+            builder.addPin("_halt", EdgeType.INPUT);
+            builder.addPin("_busak", EdgeType.INPUT);
+
             CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), ignoreWarnings);
-            
-            reducer.buildPullupSet();
-            
             reducer.dumpStats();
             reducer.validateGraph();
             reducer.dumpGraph(new File("netlist1.txt"));
