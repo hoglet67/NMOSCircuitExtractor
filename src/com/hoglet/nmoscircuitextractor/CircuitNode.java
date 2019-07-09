@@ -1,9 +1,9 @@
 package com.hoglet.nmoscircuitextractor;
 
-public abstract class CircuitNode implements Comparable<CircuitNode>{
+public abstract class CircuitNode implements Comparable<CircuitNode> {
 
     public enum NodeType {
-        VT_NET, VT_EFET_VSS, VT_EFET, VT_EFET_VCC, VT_EPULLUP, VT_DPULLUP, VT_MODULE, VT_PIN, VT_NUM_TYPES,
+        VT_NET, VT_EFET_VSS, VT_EFET, VT_EFET_VCC, VT_EPULLUP, VT_DPULLUP, VT_MODULE, VT_PIN,
     }
 
     private NodeType type;
@@ -31,15 +31,15 @@ public abstract class CircuitNode implements Comparable<CircuitNode>{
     public String toString() {
         return id;
     }
-    
+
     public void setExternal(boolean external) {
         this.external = external;
     }
-    
+
     public boolean isExternal() {
         return external;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (o != null && o instanceof CircuitNode) {
@@ -60,5 +60,5 @@ public abstract class CircuitNode implements Comparable<CircuitNode>{
     public int compareTo(CircuitNode o) {
         return (type.name() + "_" + id).compareTo(o.type.name() + "_" + o.id);
     }
-    
+
 }

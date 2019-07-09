@@ -263,7 +263,7 @@ public class ModuleGen {
 
     public static List<Module> getModules() {
         List<Module> list = new LinkedList<Module>();
-        list.add(commonNANDModule()); // No instances
+        // list.add(commonNANDModule()); // No instances
         list.add(xor2Module());
         list.add(xnor2Module());
         list.add(invertingSuperBufferModule());
