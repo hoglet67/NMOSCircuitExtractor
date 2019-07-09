@@ -238,7 +238,7 @@ public class CircuitGraphReducer {
     public void replaceModule(Module mod) {
         // Look for instances of the subgraph in the main graph
         IsomorphismInspector<CircuitNode, CircuitEdge> inspector = new VF2SubgraphIsomorphismInspector<CircuitNode, CircuitEdge>(
-                graph, mod.getGraph(), new CircuitNodeComparator(), new CircuitEdgeCompator());
+                graph, mod.getGraph(), new CircuitNodeComparator(graph), new CircuitEdgeCompator());
         Iterator<GraphMapping<CircuitNode, CircuitEdge>> it = inspector.getMappings();
         int count = 0;
         Map<ModuleNode, List<ModulePort>> toAdd = new HashMap<ModuleNode, List<ModulePort>>();

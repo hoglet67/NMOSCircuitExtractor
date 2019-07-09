@@ -50,7 +50,7 @@ public class ModuleGen {
         return new Module("noninvertingSuperBuffer", builder.getGraph(), ports);
     }
 
-    public static Module storageModule() {
+    public static Module oldStorageModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
@@ -59,6 +59,18 @@ public class ModuleGen {
         builder.addTransistor("200", 102, 101, 110);
         builder.addTransistor("201", 110, 100, net_vss);
         builder.addPullup("1", 100);
+        return new Module("storage", builder.getGraph(), ports);
+    }
+
+    public static Module storageModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        NetNode net100 = builder.addExternal(100);
+        net100.setGateOnly(true);
+        ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // clock
+        builder.addTransistor("200", 102, 101, 100);
         return new Module("storage", builder.getGraph(), ports);
     }
 
