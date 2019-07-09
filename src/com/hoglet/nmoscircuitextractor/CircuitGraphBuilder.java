@@ -190,7 +190,7 @@ public class CircuitGraphBuilder {
         }
         String hash = getHash(tr, gate, c1, c2);
         if (duplicate_map.contains(hash)) {
-            System.out.println("Skipping duplicate transistor: " + tr.getId());
+            // System.out.println("Skipping duplicate transistor: " + tr.getId());
             return null;
         }
         duplicate_map.add(hash);
@@ -227,7 +227,7 @@ public class CircuitGraphBuilder {
                 String netNum = parts[1].trim();
                 if (!nameMap.containsKey(netNum)) {
                     nameMap.put(netNum, netName);
-                    System.out.println(netNum + " => " + netName);
+                    // System.out.println(netNum + " => " + netName);
                 } else {
                     System.out.println("Ignoring duplicate mapping of " + netNum + " as " + netName);
                 }

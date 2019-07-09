@@ -5,7 +5,7 @@ import org.jgrapht.graph.DefaultEdge;
 public class CircuitEdge extends DefaultEdge {
 
     public enum EdgeType {
-        UNSPECIFIED, GATE, CHANNEL, INPUT, OUTPUT, BIDIRECTIONAL, ET_NUM_TYPES
+        UNSPECIFIED, GATE, CHANNEL, INPUT, OUTPUT, BIDIRECTIONAL
     }
 
     private static final long serialVersionUID = -9006421010257447181L;

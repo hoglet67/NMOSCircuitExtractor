@@ -96,6 +96,28 @@ public class ModuleGen {
         return new Module("xnor2", builder.getGraph(), ports);
     }
 
+    public static Module IRLatchModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
+        ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(101))); // output
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // data
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(103))); // not
+                                                                             // write
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(104))); // write
+        builder.addTransistor("200", 112, 110, net_vss);
+        builder.addTransistor("201", 110, 111, net_vss);
+        builder.addTransistor("202", 103, 111, 112);
+        builder.addPullup("1", 110);
+        builder.addPullup("2", 111);
+        builder.addTransistor("204", 110, 100, net_vcc);
+        builder.addTransistor("205", 111, 100, net_vss);
+        builder.addTransistor("206", 111, 101, net_vcc);
+        builder.addTransistor("207", 110, 101, net_vss);
+        builder.addTransistor("207", 104, 112, 102);
+        return new Module("IRLatch", builder.getGraph(), ports);
+    }
+
     public static Module latchModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
@@ -230,6 +252,33 @@ public class ModuleGen {
         return new Module("pushPull", builder.getGraph(), ports);
     }
 
+    public static Module abPinDriverModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(1018))); // +input
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(1019))); // -input
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(627))); // oe
+        // Push/Pull output stage
+        builder.addTransistor("200", 2759, 100, net_vcc);
+        builder.addTransistor("201", 2754, 100, net_vss);
+        // High-side driver
+        builder.addTransistor("202", 2753, 2754, net_vcc);
+        builder.addTransistor("203", 1018, 2754, net_vss);
+        builder.addTransistor("204", 1018, 2753, net_vss);
+        builder.addTransistor("205", 627, 2753, net_vss);
+        builder.addTransistor("206", 627, 2754, net_vss);
+        builder.addPullup("1", 2753);
+        // Low-side driver
+        builder.addTransistor("212", 2718, 2759, net_vcc);
+        builder.addTransistor("213", 1019, 2759, net_vss);
+        builder.addTransistor("214", 1019, 2718, net_vss);
+        builder.addTransistor("215", 627, 2718, net_vss);
+        builder.addTransistor("216", 627, 2759, net_vss);
+        builder.addPullup("2", 2718);
+        return new Module("abPinDriver", builder.getGraph(), ports);
+    }
+
     public static Module pass8Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
@@ -266,9 +315,11 @@ public class ModuleGen {
         // list.add(commonNANDModule()); // No instances
         list.add(xor2Module());
         list.add(xnor2Module());
+        list.add(abPinDriverModule());
         list.add(invertingSuperBufferModule());
         list.add(noninvertingSuperBufferModule());
         list.add(registerModule());
+        list.add(IRLatchModule());
         list.add(latchModule());
         list.add(clockedRSLatchPPModule());
         list.add(clockedRSLatchModule());

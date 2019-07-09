@@ -12,15 +12,6 @@ public class NMOSCircuitExtractor {
         try {
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
-            
-            // See docs/InitialWarnings.txt for what each of these is
-            ignoreWarnings.add(new NetNode("45"));
-            ignoreWarnings.add(new NetNode("46"));
-            ignoreWarnings.add(new NetNode("47"));
-            ignoreWarnings.add(new NetNode("230"));
-            ignoreWarnings.add(new NetNode("1061"));
-            ignoreWarnings.add(new NetNode("2775"));
-            ignoreWarnings.add(new NetNode("2776"));
 
             // Parse the Z80 into the main graph
             File transdefs = new File("transdefs.js");
@@ -31,9 +22,10 @@ public class NMOSCircuitExtractor {
 
             // Note, in these pin definitions, the edge indicates the connection
             // of the pin to the internal circuitry, so is the opposite of what
-            // might be expected. e.g. An input pin is connected with an OUTPUT edge
+            // might be expected. e.g. An input pin is connected with an OUTPUT
+            // edge
             // because it drives internal signal.
-            
+
             builder.addPin("clk", EdgeType.OUTPUT);
             builder.addPin("ab0", EdgeType.INPUT);
             builder.addPin("ab1", EdgeType.INPUT);
@@ -72,6 +64,15 @@ public class NMOSCircuitExtractor {
             builder.addPin("db7", EdgeType.BIDIRECTIONAL);
             builder.addPin("_halt", EdgeType.INPUT);
             builder.addPin("_busak", EdgeType.INPUT);
+
+            // See docs/InitialWarnings.txt for what each of these is
+            ignoreWarnings.add(new NetNode("45"));
+            ignoreWarnings.add(new NetNode("46"));
+            ignoreWarnings.add(new NetNode("47"));
+            ignoreWarnings.add(new NetNode("230"));
+            ignoreWarnings.add(new NetNode("1061"));
+            ignoreWarnings.add(new NetNode("2775"));
+            ignoreWarnings.add(new NetNode("2776"));
 
             CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), ignoreWarnings);
             reducer.dumpStats();
