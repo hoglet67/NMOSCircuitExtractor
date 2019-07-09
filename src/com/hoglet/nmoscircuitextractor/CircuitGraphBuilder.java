@@ -85,7 +85,7 @@ public class CircuitGraphBuilder {
         duplicate_map.add(hash);
         graph.addVertex(tr);
         CircuitNode netNode = addNet(net);
-        graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
+        graph.addEdge(tr, netNode).setType(EdgeType.PULLUP);
         return tr;
     }
 

@@ -329,7 +329,7 @@ public class CircuitGraphReducer {
         System.out.println("Net connectivity distribution:");
         for (Map.Entry<Integer, Set<NetNode>> entry : connectionMap.entrySet()) {
             System.out.print("  " + entry.getValue().size() + "\t" + entry.getKey());
-            if (entry.getValue().size() <= 50) {
+            if (entry.getValue().size() <= 100) {
                 System.out.print("\t" + entry.getValue());
             }
             System.out.println();
@@ -337,7 +337,7 @@ public class CircuitGraphReducer {
         System.out.println("Net connectivity type distribution:");
         for (Map.Entry<String, Set<NetNode>> entry : connectionTypeMap.entrySet()) {
             System.out.print("  " + entry.getValue().size() + "\t" + entry.getKey());
-            if (entry.getValue().size() <= 50) {
+            if (entry.getValue().size() <= 100) {
                 System.out.print("\t" + entry.getValue());
             }
             System.out.println();
@@ -370,6 +370,7 @@ public class CircuitGraphReducer {
         ps.println(tn);
         dumpConnections(ps, "             gate", getConnections(tn, EdgeType.GATE));
         dumpConnections(ps, "          channel", getConnections(tn, EdgeType.CHANNEL));
+        dumpConnections(ps, "           pullup", getConnections(tn, EdgeType.PULLUP));
         dumpConnections(ps, "            input", getConnections(tn, EdgeType.INPUT));
         dumpConnections(ps, "           output", getConnections(tn, EdgeType.OUTPUT));
         dumpConnections(ps, "    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
