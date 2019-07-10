@@ -3,12 +3,12 @@ package com.hoglet.nmoscircuitextractor;
 public class NetNode extends CircuitNode {
 
     private int degree;
-    private boolean gateOnly;
+    private int channelConstraint;
 
     public NetNode(String id) {
         super(NodeType.VT_NET, id);
         degree = 0;
-        gateOnly = false;
+        channelConstraint = -1;
     }
 
     public int getDegree() {
@@ -19,11 +19,15 @@ public class NetNode extends CircuitNode {
         degree++;
     }
 
-    public boolean isGateOnly() {
-        return gateOnly;
+    public boolean hasChannelConstraint() {
+        return channelConstraint >= 0;
     }
 
-    public void setGateOnly(boolean gateOnly) {
-        this.gateOnly = gateOnly;
+    public int getChannelConstraint() {
+        return channelConstraint;
+    }
+
+    public void setChannelConstraint(int channelConstraint) {
+        this.channelConstraint = channelConstraint;
     }
 }

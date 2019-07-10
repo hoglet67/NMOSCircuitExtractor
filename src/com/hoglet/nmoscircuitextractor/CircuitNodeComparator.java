@@ -20,7 +20,15 @@ public class CircuitNodeComparator implements Comparator<CircuitNode> {
             NetNode net0 = (NetNode) arg0;
             NetNode net1 = (NetNode) arg1;
             if (net0.isExternal() || net1.isExternal()) {
-                NetNode net = net0.isGateOnly() ? net1 : net1.isGateOnly() ? net0 : null;
+                int channnelConstraint = -1;
+                NetNode net = null;
+                if (net0.hasChannelConstraint()) {
+                    channnelConstraint = net0.getChannelConstraint();
+                    net = net1;
+                } else if (net1.hasChannelConstraint()) {
+                    channnelConstraint = net1.getChannelConstraint();
+                    net = net0;
+                }
                 if (net == null) {
                     return 0;
                 } else {
@@ -28,9 +36,9 @@ public class CircuitNodeComparator implements Comparator<CircuitNode> {
                     for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
                         counts[edge.getType().ordinal()]++;
                     }
-                    if (counts[EdgeType.CHANNEL.ordinal()] == 1 && counts[EdgeType.PULLUP.ordinal()] == 0
-                            && counts[EdgeType.INPUT.ordinal()] == 0 && counts[EdgeType.OUTPUT.ordinal()] == 0
-                            && counts[EdgeType.BIDIRECTIONAL.ordinal()] == 0) {
+                    if (counts[EdgeType.CHANNEL.ordinal()] == channnelConstraint && counts[EdgeType.PULLUP.ordinal()] == 0
+                            && (counts[EdgeType.INPUT.ordinal()] > 0 || counts[EdgeType.GATE.ordinal()] > 0)
+                            && counts[EdgeType.OUTPUT.ordinal()] == 0 && counts[EdgeType.BIDIRECTIONAL.ordinal()] == 0) {
                         return 0;
                     } else {
                         return 1; // ???

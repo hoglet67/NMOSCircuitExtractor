@@ -66,7 +66,7 @@ public class ModuleGen {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         NetNode net100 = builder.addExternal(100);
-        net100.setGateOnly(true);
+        net100.setChannelConstraint(1);
         ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // gate
@@ -78,7 +78,7 @@ public class ModuleGen {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         NetNode net100 = builder.addExternal(100);
-        net100.setGateOnly(true);
+        net100.setChannelConstraint(1);
         ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // gate
@@ -91,7 +91,7 @@ public class ModuleGen {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         NetNode net100 = builder.addExternal(100);
-        net100.setGateOnly(true);
+        net100.setChannelConstraint(1);
         ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // gate1
@@ -99,6 +99,20 @@ public class ModuleGen {
         builder.addTransistor("200", 102, 110, 100);
         builder.addTransistor("201", 103, 101, 110);
         return new Module("storage2Gb", builder.getGraph(), ports);
+    }
+
+    public static Module muxModule(int n) {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        NetNode net100 = builder.addExternal(100);
+        net100.setChannelConstraint(n);
+        ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
+        for (int i = 0; i < n; i++) {
+            ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101 + 50 * i))); // data0
+            ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102 + 50 * i))); // clock0
+            builder.addTransistor("" + (200 + i), 102 + 50 * i, 101 + 50 * i, 100);
+        }
+        return new Module("mux" + n, builder.getGraph(), ports);
     }
 
     public static Module xor2Module() {
@@ -135,14 +149,40 @@ public class ModuleGen {
         return new Module("xnor2", builder.getGraph(), ports);
     }
 
-    public static Module IRLatchModule() {
+    public static Module z80DBLatchModule() {
+        // See http://baltazarstudios.com/anatomy-z80-gate/
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // DQ
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // Din
+        ports.add(new ModulePort(EdgeType.BIDIRECTIONAL, builder.addExternal(102))); // DB
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(103))); // B
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(104))); // C
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(105))); // D
+        builder.addTransistor("30", 105, 113, 102);
+        builder.addTransistor("31", 112, 113, net_vss);
+        builder.addTransistor("32", 111, 113, net_vcc);
+        builder.addTransistor("33", 104, 102, 100);
+        builder.addTransistor("34", 100, 112, net_vss);
+        builder.addPullup("35", 112);
+        builder.addTransistor("36", 112, 111, net_vss);
+        builder.addPullup("37", 111);
+        builder.addTransistor("38", 103, 101, 100);
+        builder.addTransistor("39", 110, 111, 100);
+        builder.addTransistor("40", 103, 110, net_vss);
+        builder.addTransistor("41", 104, 110, net_vss);
+        builder.addPullup("42", 110);
+        return new Module("DBLatch", builder.getGraph(), ports);
+    }
+
+    public static Module z80IRLatchModule() {
+        // See http://baltazarstudios.com/z80-instruction-register-deciphered/
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(101))); // output
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // data
-        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(103))); // not
-                                                                             // write
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(103))); // not_write
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(104))); // write
         builder.addTransistor("200", 112, 110, net_vss);
         builder.addTransistor("201", 110, 111, net_vss);
@@ -207,7 +247,7 @@ public class ModuleGen {
         return new Module("clockedRSLatchPP", builder.getGraph(), ports);
     }
 
-    public static Module RSLatchModule() {
+    public static Module setResetLatchModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
@@ -223,7 +263,7 @@ public class ModuleGen {
         return new Module("RSLatch", builder.getGraph(), ports);
     }
 
-    public static Module RSLatchPPModule() {
+    public static Module setResetLatchPPModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
@@ -291,7 +331,8 @@ public class ModuleGen {
         return new Module("pushPull", builder.getGraph(), ports);
     }
 
-    public static Module abPinDriverModule() {
+    public static Module z80ABPinDriverModule() {
+        // See http://baltazarstudios.com/anatomy-z80-gate/
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal(100))); // output
@@ -351,22 +392,30 @@ public class ModuleGen {
 
     public static List<Module> getModules() {
         List<Module> list = new LinkedList<Module>();
-        // list.add(commonNANDModule()); // No instances
+        // Complex modules
+        list.add(z80ABPinDriverModule());
+        list.add(z80IRLatchModule());
+        list.add(z80DBLatchModule());
+        // Storage modules
         list.add(storage2GaModule());
         list.add(storage2GbModule());
         list.add(storage1GModule());
+        // Combinatorial
         list.add(xor2Module());
         list.add(xnor2Module());
-        list.add(abPinDriverModule());
         list.add(invertingSuperBufferModule());
         list.add(noninvertingSuperBufferModule());
+        // Latches / Registers
         list.add(registerModule());
-        list.add(IRLatchModule());
         list.add(latchModule());
         list.add(clockedRSLatchPPModule());
         list.add(clockedRSLatchModule());
-        list.add(RSLatchPPModule());
-        list.add(RSLatchModule());
+        list.add(setResetLatchPPModule());
+        list.add(setResetLatchModule());
+        // Mux modules
+        for (int n = 8; n >= 2; n--) {
+            list.add(muxModule(n));
+        }
         list.add(crossCoupledTransistors1Module());
         list.add(crossCoupledTransistors2Module());
         // list.add(pushPullModule());
