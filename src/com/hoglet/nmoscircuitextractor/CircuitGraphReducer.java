@@ -242,29 +242,49 @@ public class CircuitGraphReducer {
         Iterator<GraphMapping<CircuitNode, CircuitEdge>> it = inspector.getMappings();
         int count = 0;
         Map<ModuleNode, List<ModulePort>> toAdd = new HashMap<ModuleNode, List<ModulePort>>();
+        Set<CircuitNode> toDelete = new HashSet<CircuitNode>();
         while (it.hasNext()) {
             GraphMapping<CircuitNode, CircuitEdge> mapping = it.next();
 
-            // Remove the transistors etc
+            // Has this mapping already be handled (from another perspective)
+            // which can happen if the sub graph has internal symmetry
+            boolean visited = false;
             for (CircuitNode subcn : mod.getGraph().vertexSet()) {
                 if (!subcn.isExternal()) {
                     CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
-                    graph.removeVertex(cn);
+                    if (toDelete.contains(cn)) {
+                        visited = true;
+                        break;
+                    }
+                }
+            }
+            if (visited) {
+                continue;
+            }
+
+            // Record the components (transistors, internal nets) for later deletion (outside the iterator) in toDelete
+            for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+                if (!subcn.isExternal()) {
+                    CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+                    toDelete.add(cn);
                 }
             }
 
-            // Add a module
-            count++;
+            // Record the new module to add in toAdd
             ModuleNode modNode = new ModuleNode(mod.getName() + count);
-            // System.out.println(modNode.getId());
             List<ModulePort> ports = new LinkedList<ModulePort>();
             for (ModulePort subp : mod.getPorts()) {
                 CircuitNode netNode = mapping.getVertexCorrespondence(subp.getNet(), false);
                 ports.add(new ModulePort(subp.getType(), (NetNode) netNode));
             }
             toAdd.put(modNode, ports);
-
+            count++;
         }
+        // Delete the components from the graph that have been replaced by new modules
+        for (CircuitNode cn : toDelete) {
+            graph.removeVertex(cn);
+        }
+        // Add the new modules to the graph
         for (Entry<ModuleNode, List<ModulePort>> entry : toAdd.entrySet()) {
             ModuleNode modNode = entry.getKey();
             graph.addVertex(modNode);
