@@ -62,16 +62,43 @@ public class ModuleGen {
         return new Module("storage", builder.getGraph(), ports);
     }
 
-    public static Module storageModule() {
+    public static Module storage1GModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder();
         NetNode net100 = builder.addExternal(100);
         net100.setGateOnly(true);
         ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
         ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
-        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // clock
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // gate
         builder.addTransistor("200", 102, 101, 100);
-        return new Module("storage", builder.getGraph(), ports);
+        return new Module("storage1G", builder.getGraph(), ports);
+    }
+
+    public static Module storage2GaModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        NetNode net100 = builder.addExternal(100);
+        net100.setGateOnly(true);
+        ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // gate
+        builder.addTransistor("200", 102, 110, 100);
+        builder.addTransistor("201", 102, 101, 110);
+        return new Module("storage2Ga", builder.getGraph(), ports);
+    }
+
+    public static Module storage2GbModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        NetNode net100 = builder.addExternal(100);
+        net100.setGateOnly(true);
+        ports.add(new ModulePort(EdgeType.OUTPUT, net100)); // output
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(101))); // data
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(102))); // gate1
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal(103))); // gate2
+        builder.addTransistor("200", 102, 110, 100);
+        builder.addTransistor("201", 103, 101, 110);
+        return new Module("storage2Gb", builder.getGraph(), ports);
     }
 
     public static Module xor2Module() {
@@ -325,6 +352,9 @@ public class ModuleGen {
     public static List<Module> getModules() {
         List<Module> list = new LinkedList<Module>();
         // list.add(commonNANDModule()); // No instances
+        list.add(storage2GaModule());
+        list.add(storage2GbModule());
+        list.add(storage1GModule());
         list.add(xor2Module());
         list.add(xnor2Module());
         list.add(abPinDriverModule());
@@ -337,7 +367,6 @@ public class ModuleGen {
         list.add(clockedRSLatchModule());
         list.add(RSLatchPPModule());
         list.add(RSLatchModule());
-        list.add(storageModule());
         list.add(crossCoupledTransistors1Module());
         list.add(crossCoupledTransistors2Module());
         // list.add(pushPullModule());
