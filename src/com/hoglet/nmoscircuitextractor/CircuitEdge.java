@@ -11,6 +11,7 @@ public class CircuitEdge extends DefaultEdge {
     private static final long serialVersionUID = -9006421010257447181L;
 
     private EdgeType type;
+    private String name;
 
     public CircuitEdge() {
         this(EdgeType.UNSPECIFIED);
@@ -27,6 +28,14 @@ public class CircuitEdge extends DefaultEdge {
 
     public EdgeType getType() {
         return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 }

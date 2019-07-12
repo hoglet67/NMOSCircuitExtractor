@@ -12,7 +12,7 @@ public class NMOSCircuitExtractor {
     public static void main(String args[]) {
         try {
 
-            boolean validate = false;
+            boolean validate = true;
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
 

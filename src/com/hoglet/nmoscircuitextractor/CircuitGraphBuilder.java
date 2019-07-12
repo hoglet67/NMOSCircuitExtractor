@@ -190,7 +190,8 @@ public class CircuitGraphBuilder {
         }
         String hash = getHash(tr, gate, c1, c2);
         if (duplicate_map.contains(hash)) {
-            // System.out.println("Skipping duplicate transistor: " + tr.getId());
+            // System.out.println("Skipping duplicate transistor: " +
+            // tr.getId());
             return null;
         }
         duplicate_map.add(hash);
@@ -208,7 +209,7 @@ public class CircuitGraphBuilder {
             CircuitNode netNode = addNet(c2);
             graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
         }
-        tr.setFunction("" + gate);
+        tr.setFunction("[" + gate + "]");
 
         return tr;
     }

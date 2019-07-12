@@ -66,7 +66,7 @@ public class CircuitGraphReducer {
         for (CircuitNode seed : graph.vertexSet()) {
             if (seed.isPullup()) {
                 boolean debug = false;
-                debug |= seed.getId().equals("pullup1239");
+                // debug |= seed.getId().equals("pullup1239");
                 for (CircuitEdge edge : graph.outgoingEdgesOf(seed)) {
                     if (edge.getType() == EdgeType.GATE) {
                         continue;
@@ -346,6 +346,8 @@ public class CircuitGraphReducer {
     // Match and replace instances of a module
     // ============================================================
 
+    private static Map<String, Integer> numMap = new HashMap<String, Integer>();
+
     public void replaceModule(Module mod) {
         // Look for instances of the subgraph in the main graph
         IsomorphismInspector<CircuitNode, CircuitEdge> inspector = new VF2SubgraphIsomorphismInspector<CircuitNode, CircuitEdge>(
@@ -383,11 +385,17 @@ public class CircuitGraphReducer {
             }
 
             // Record the new module to add in toAdd
-            ModuleNode modNode = new ModuleNode(mod.getName() + count);
+            Integer num = numMap.get(mod.getName());
+            if (num == null) {
+                num = 0;
+            }
+            num++;
+            numMap.put(mod.getName(), num);
+            ModuleNode modNode = new ModuleNode(mod.getName() + num);
             List<ModulePort> ports = new LinkedList<ModulePort>();
             for (ModulePort subp : mod.getPorts()) {
                 CircuitNode netNode = mapping.getVertexCorrespondence(subp.getNet(), false);
-                ports.add(new ModulePort(subp.getType(), (NetNode) netNode));
+                ports.add(new ModulePort(subp.getName(), subp.getType(), (NetNode) netNode));
             }
             toAdd.put(modNode, ports);
             count++;
@@ -402,7 +410,9 @@ public class CircuitGraphReducer {
             ModuleNode modNode = entry.getKey();
             graph.addVertex(modNode);
             for (ModulePort modPort : entry.getValue()) {
-                graph.addEdge(modNode, modPort.getNet()).setType(modPort.getType());
+                CircuitEdge edge = graph.addEdge(modNode, modPort.getNet());
+                edge.setType(modPort.getType());
+                edge.setName(modPort.getName());
             }
         }
         System.out.println(mod.getName() + ": replaced " + count + " instances");
@@ -513,33 +523,37 @@ public class CircuitGraphReducer {
         }
         StringBuffer sb = new StringBuffer();
         sb.append(message);
-        sb.append(": [");
+        sb.append(": ");
         boolean first = true;
         for (NetNode net : nets) {
             if (!first) {
                 sb.append(", ");
             }
+            sb.append('[');
             sb.append(net.toString());
-            if (!pullupNetSet.contains(net)) {
-                sb.append('#');
-            }
+            sb.append(']');
+            // if (!pullupNetSet.contains(net)) {
+            // sb.append('#');
+            // }
             first = false;
         }
-        sb.append(']');
         ps.println(sb.toString());
     }
 
     private void dumpNode(PrintStream ps, CircuitNode tn) {
         ps.println(tn);
-        dumpConnections(ps, "             gate", getConnections(tn, EdgeType.GATE));
-        dumpConnections(ps, "          channel", getConnections(tn, EdgeType.CHANNEL));
-        dumpConnections(ps, "           pullup", getConnections(tn, EdgeType.PULLUP));
-        dumpConnections(ps, "            input", getConnections(tn, EdgeType.INPUT));
-        dumpConnections(ps, "           output", getConnections(tn, EdgeType.OUTPUT));
-        dumpConnections(ps, "    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
-        dumpConnections(ps, "      unspecified", getConnections(tn, EdgeType.UNSPECIFIED));
+        if (tn.getType() == NodeType.VT_MODULE) {
+            for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
+                ps.println(String.format("%17s: %s", edge.getName(), graph.getEdgeTarget(edge)));
+            }
+        } else {
+            dumpConnections(ps, "             gate", getConnections(tn, EdgeType.GATE));
+            dumpConnections(ps, "          channel", getConnections(tn, EdgeType.CHANNEL));
+            dumpConnections(ps, "           pullup", getConnections(tn, EdgeType.PULLUP));
+            dumpConnections(ps, "      unspecified", getConnections(tn, EdgeType.UNSPECIFIED));
+        }
         if (tn.getType() == NodeType.VT_EFET || tn.getType() == NodeType.VT_EFET_VSS) {
-            ps.println("               fn: " + ((TransistorNode) tn).getFunction());
+            ps.println("               fn: NOT(" + ((TransistorNode) tn).getFunction() + ")");
         }
     }
 
