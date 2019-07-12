@@ -67,7 +67,7 @@ public class CircuitGraphReducer {
         for (CircuitNode seed : graph.vertexSet()) {
             if (seed.isPullup()) {
                 boolean debug = false;
-                // debug |= seed.getId().equals("pullup1239");
+                debug |= seed.getId().equals("pullup737");
                 for (CircuitEdge edge : graph.outgoingEdgesOf(seed)) {
                     if (edge.getType() == EdgeType.GATE) {
                         continue;
@@ -518,6 +518,16 @@ public class CircuitGraphReducer {
         // }
     }
 
+    private String netLabel(NetNode net) {
+        StringBuffer sb = new StringBuffer();
+        sb.append('[');
+        sb.append(net.toString());
+        sb.append(']');
+        if (!pullupNetSet.contains(net)) {
+            sb.append('#');
+        }
+        return sb.toString();
+    }
     private void dumpConnections(PrintStream ps, String message, Set<NetNode> nets) {
         if (nets.size() == 0) {
             return;
@@ -530,12 +540,7 @@ public class CircuitGraphReducer {
             if (!first) {
                 sb.append(", ");
             }
-            sb.append('[');
-            sb.append(net.toString());
-            sb.append(']');
-            // if (!pullupNetSet.contains(net)) {
-            // sb.append('#');
-            // }
+            sb.append(netLabel(net));
             first = false;
         }
         ps.println(sb.toString());
@@ -545,7 +550,7 @@ public class CircuitGraphReducer {
         ps.println(tn);
         if (tn.getType() == NodeType.VT_MODULE) {
             for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
-                ps.println(String.format("%17s: [%s]", edge.getName(), graph.getEdgeTarget(edge)));
+                ps.println(String.format("%17s: %s", edge.getName(), netLabel((NetNode) graph.getEdgeTarget(edge))));
             }
         } else {
             dumpConnections(ps, "             gate", getConnections(tn, EdgeType.GATE));
