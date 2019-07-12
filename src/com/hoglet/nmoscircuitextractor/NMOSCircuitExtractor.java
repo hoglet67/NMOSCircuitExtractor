@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
-import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class NMOSCircuitExtractor {
 
@@ -17,10 +16,13 @@ public class NMOSCircuitExtractor {
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
 
             // Parse the Z80 into the main graph
+            String net_vss = "vss";
+            String net_vcc = "vcc";
+
             File transdefs = new File("transdefs.js");
             File segdefs = new File("segdefs.js");
             File nodenames = new File("nodenames.js");
-            CircuitGraphBuilder builder = new CircuitGraphBuilder();
+            CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
             builder.readNetlist(transdefs, segdefs, nodenames);
 
             // Note, in these pin definitions, the edge indicates the connection
@@ -77,7 +79,7 @@ public class NMOSCircuitExtractor {
             ignoreWarnings.add(new NetNode("2775"));
             ignoreWarnings.add(new NetNode("2776"));
 
-            CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), ignoreWarnings);
+            CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), net_vss, net_vcc, ignoreWarnings);
             reducer.dumpStats();
             if (validate) {
                 reducer.validateGraph();
@@ -86,7 +88,8 @@ public class NMOSCircuitExtractor {
 
             // Remove some known modules
             System.out.println("Replacing modules");
-            for (Module mod : ModuleGen.getModules()) {
+            ModuleGen moduleGen = new ModuleGen(net_vss, net_vcc);
+            for (Module mod : moduleGen.getModules()) {
                 reducer.replaceModule(mod);
             }
             reducer.dumpStats();
@@ -104,15 +107,6 @@ public class NMOSCircuitExtractor {
                 reducer.validateGraph();
             }
             reducer.dumpGraph(new File("netlist3.txt"));
-
-            System.out.println("List of remaining VT_FET with tree attribute set");
-            for (CircuitNode cn : builder.getGraph().vertexSet()) {
-                if (cn.getType() == NodeType.VT_EFET) {
-                    if (cn.isTree()) {
-                        System.out.println(cn);
-                    }
-                }
-            }
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -24,16 +24,17 @@ import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
 import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class CircuitGraphReducer {
-    protected String net_vss = "vss";
-    protected String net_vcc = "vcc";
 
-    protected Set<CircuitNode> pullupNetSet = new TreeSet<CircuitNode>();
     protected Graph<CircuitNode, CircuitEdge> graph;
-
+    protected String net_vss;
+    protected String net_vcc;
     protected Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
+    protected Set<CircuitNode> pullupNetSet = new TreeSet<CircuitNode>();
 
-    public CircuitGraphReducer(Graph<CircuitNode, CircuitEdge> graph, Set<NetNode> ignoreWarnings) {
+    public CircuitGraphReducer(Graph<CircuitNode, CircuitEdge> graph, String net_vss, String net_vcc, Set<NetNode> ignoreWarnings) {
         this.graph = graph;
+        this.net_vss = net_vss;
+        this.net_vcc = net_vcc;
         this.ignoreWarnings.addAll(ignoreWarnings);
         buildPullupSet();
         buildNodeTypes();

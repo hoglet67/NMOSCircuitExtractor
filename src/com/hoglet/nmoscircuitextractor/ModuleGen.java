@@ -7,13 +7,18 @@ import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
 
 public class ModuleGen {
 
-    public static String net_vss = "vss";
-    public static String net_vcc = "vcc";
+    private String net_vss;
+    private String net_vcc;
+
+    public ModuleGen(String net_vss, String net_vcc) {
+        this.net_vss = net_vss;
+        this.net_vcc = net_vcc;
+    }
 
     // Build a small subgraph that looks like the register cell
-    private static Module registerModule() {
+    private Module registerModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.BIDIRECTIONAL, builder.addExternal(100))); // in/out
         ports.add(new ModulePort("NQ", EdgeType.BIDIRECTIONAL, builder.addExternal(101))); // in/out
         ports.add(new ModulePort("SEL", EdgeType.INPUT, builder.addExternal(102))); // select
@@ -26,9 +31,9 @@ public class ModuleGen {
         return new Module("register", builder.getGraph(), ports);
     }
 
-    private static Module superComplementaryModule() {
+    private Module superComplementaryModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("O1", EdgeType.OUTPUT, builder.addExternal(101))); // output
         ports.add(new ModulePort("O2", EdgeType.OUTPUT, builder.addExternal(102))); // output
@@ -41,9 +46,9 @@ public class ModuleGen {
         return new Module("superComplementary", builder.getGraph(), ports);
     }
 
-    private static Module superInvertorModule() {
+    private Module superInvertorModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(101))); // output
         builder.addPullup("1", 110);
@@ -53,9 +58,9 @@ public class ModuleGen {
         return new Module("superInverter", builder.getGraph(), ports);
     }
 
-    private static Module superBufferModule() {
+    private Module superBufferModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(101))); // output
         builder.addPullup("1", 110);
@@ -65,9 +70,9 @@ public class ModuleGen {
         return new Module("superBuffer", builder.getGraph(), ports);
     }
 
-    private static Module superNORModule() {
+    private Module superNORModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
@@ -80,9 +85,9 @@ public class ModuleGen {
         return new Module("superNOR", builder.getGraph(), ports);
     }
 
-    private static Module superNANDModule() {
+    private Module superNANDModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
@@ -95,9 +100,9 @@ public class ModuleGen {
         return new Module("superNAND", builder.getGraph(), ports);
     }
 
-    private static Module oldStorageModule() {
+    private Module oldStorageModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("D", EdgeType.INPUT, builder.addExternal(101))); // data
         ports.add(new ModulePort("G", EdgeType.INPUT, builder.addExternal(102))); // clock
@@ -107,9 +112,9 @@ public class ModuleGen {
         return new Module("storage", builder.getGraph(), ports);
     }
 
-    private static Module storage1GModule() {
+    private Module storage1GModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         NetNode net100 = builder.addExternal(100);
         net100.setChannelConstraint(1);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, net100)); // output
@@ -119,9 +124,9 @@ public class ModuleGen {
         return new Module("storage1G", builder.getGraph(), ports);
     }
 
-    private static Module storage2GaModule() {
+    private Module storage2GaModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         NetNode net100 = builder.addExternal(100);
         net100.setChannelConstraint(1);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, net100)); // output
@@ -132,9 +137,9 @@ public class ModuleGen {
         return new Module("storage2Ga", builder.getGraph(), ports);
     }
 
-    private static Module storage2GbModule() {
+    private Module storage2GbModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         NetNode net100 = builder.addExternal(100);
         net100.setChannelConstraint(1);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, net100)); // output
@@ -146,9 +151,9 @@ public class ModuleGen {
         return new Module("storage2Gb", builder.getGraph(), ports);
     }
 
-    private static Module muxModule(int n) {
+    private Module muxModule(int n) {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         NetNode net100 = builder.addExternal(100);
         net100.setChannelConstraint(n);
         ports.add(new ModulePort("O", EdgeType.OUTPUT, net100)); // output
@@ -160,9 +165,9 @@ public class ModuleGen {
         return new Module("mux" + n, builder.getGraph(), ports);
     }
 
-    private static Module xor2Module() {
+    private Module xor2Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("A", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("B", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
@@ -178,9 +183,9 @@ public class ModuleGen {
         return new Module("xor2", builder.getGraph(), ports);
     }
 
-    private static Module xnor2Module() {
+    private Module xnor2Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("A", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("B", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
@@ -194,10 +199,10 @@ public class ModuleGen {
         return new Module("xnor2", builder.getGraph(), ports);
     }
 
-    private static Module z80DBLatchModule() {
+    private Module z80DBLatchModule() {
         // See http://baltazarstudios.com/anatomy-z80-gate/
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("DQ", EdgeType.OUTPUT, builder.addExternal(100))); // DQ
         ports.add(new ModulePort("DIN", EdgeType.INPUT, builder.addExternal(101))); // Din
         ports.add(new ModulePort("DB", EdgeType.BIDIRECTIONAL, builder.addExternal(102))); // DB
@@ -220,10 +225,10 @@ public class ModuleGen {
         return new Module("DBLatch", builder.getGraph(), ports);
     }
 
-    private static Module z80IRLatchModule() {
+    private Module z80IRLatchModule() {
         // See http://baltazarstudios.com/z80-instruction-register-deciphered/
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(101))); // output
         ports.add(new ModulePort("DIN", EdgeType.INPUT, builder.addExternal(102))); // data
@@ -242,9 +247,9 @@ public class ModuleGen {
         return new Module("IRLatch", builder.getGraph(), ports);
     }
 
-    private static Module latchModule(boolean incQ, boolean incNQ) {
+    private Module latchModule(boolean incQ, boolean incNQ) {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         if (incNQ) {
             ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(100))); // output
         }
@@ -261,9 +266,9 @@ public class ModuleGen {
         return new Module("latch", builder.getGraph(), ports);
     }
 
-    private static Module latchPassModule(boolean incQ, boolean incNQ) {
+    private Module latchPassModule(boolean incQ, boolean incNQ) {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         if (incNQ) {
             ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(100))); // output
         }
@@ -282,9 +287,9 @@ public class ModuleGen {
         return new Module("latchPass", builder.getGraph(), ports);
     }
 
-    private static Module clockedRSLatchModule(boolean incQ, boolean incNQ) {
+    private Module clockedRSLatchModule(boolean incQ, boolean incNQ) {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         if (incNQ) {
             ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(100))); // output
         }
@@ -303,9 +308,9 @@ public class ModuleGen {
         return new Module("clockedRSLatch", builder.getGraph(), ports);
     }
 
-    private static Module clockedRSLatchPPModule() {
+    private Module clockedRSLatchPPModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("NS", EdgeType.INPUT, builder.addExternal(101))); // set
         ports.add(new ModulePort("NR", EdgeType.INPUT, builder.addExternal(102))); // reset
@@ -321,9 +326,9 @@ public class ModuleGen {
         return new Module("clockedRSLatchPP", builder.getGraph(), ports);
     }
 
-    private static Module setResetLatchModule(boolean incQ, boolean incNQ) {
+    private Module setResetLatchModule(boolean incQ, boolean incNQ) {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         if (incNQ) {
             ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(100))); // output
         }
@@ -341,9 +346,9 @@ public class ModuleGen {
         return new Module("RSLatch", builder.getGraph(), ports);
     }
 
-    private static Module setResetLatchPPModule() {
+    private Module setResetLatchPPModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("S", EdgeType.INPUT, builder.addExternal(101))); // set
         ports.add(new ModulePort("R", EdgeType.INPUT, builder.addExternal(102))); // reset
@@ -358,9 +363,9 @@ public class ModuleGen {
         return new Module("RSLatchPP", builder.getGraph(), ports);
     }
 
-    private static Module commonNANDModule() {
+    private Module commonNANDModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("O1", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("O2", EdgeType.OUTPUT, builder.addExternal(101))); // output
         ports.add(new ModulePort("A1", EdgeType.INPUT, builder.addExternal(102))); // inputA
@@ -374,9 +379,9 @@ public class ModuleGen {
         return new Module("commonNAND", builder.getGraph(), ports);
     }
 
-    private static Module crossCoupledTransistors1Module() {
+    private Module crossCoupledTransistors1Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("A", EdgeType.INPUT, builder.addExternal(101))); // inputA
         ports.add(new ModulePort("B", EdgeType.INPUT, builder.addExternal(102))); // inputB
@@ -386,9 +391,9 @@ public class ModuleGen {
         return new Module("crossCoupledTransistors1", builder.getGraph(), ports);
     }
 
-    private static Module crossCoupledTransistors2Module() {
+    private Module crossCoupledTransistors2Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(101))); // output
         builder.addTransistor("200", 101, 100, net_vss);
@@ -398,9 +403,9 @@ public class ModuleGen {
         return new Module("crossCoupledTransistors2", builder.getGraph(), ports);
     }
 
-    private static Module pushPullModule() {
+    private Module pushPullModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("O", EdgeType.BIDIRECTIONAL, builder.addExternal(100))); // output
         ports.add(new ModulePort("IL", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("IH", EdgeType.INPUT, builder.addExternal(102))); // input
@@ -409,10 +414,10 @@ public class ModuleGen {
         return new Module("pushPull", builder.getGraph(), ports);
     }
 
-    private static Module z80ABPinDriverModule() {
+    private Module z80ABPinDriverModule() {
         // See http://baltazarstudios.com/anatomy-z80-gate/
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("AB", EdgeType.OUTPUT, builder.addExternal(100))); // output
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(1018))); // +input
         ports.add(new ModulePort("NI", EdgeType.INPUT, builder.addExternal(1019))); // -input
@@ -437,9 +442,9 @@ public class ModuleGen {
         return new Module("abPinDriver", builder.getGraph(), ports);
     }
 
-    private static Module pass8Module() {
+    private Module pass8Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("A0", EdgeType.BIDIRECTIONAL, builder.addExternal(100))); // A0
         ports.add(new ModulePort("A1", EdgeType.BIDIRECTIONAL, builder.addExternal(101))); // A1
         ports.add(new ModulePort("A2", EdgeType.BIDIRECTIONAL, builder.addExternal(102))); // A2
@@ -468,7 +473,7 @@ public class ModuleGen {
         return new Module("pass8", builder.getGraph(), ports);
     }
 
-    public static List<Module> getModules() {
+    public List<Module> getModules() {
         List<Module> list = new LinkedList<Module>();
         // Complex modules
         list.add(z80ABPinDriverModule());
@@ -513,9 +518,9 @@ public class ModuleGen {
         return list;
     }
 
-    // private static Module Module() {
+    // private Module Module() {
     // List<ModulePort> ports = new LinkedList<ModulePort>();
-    // CircuitGraphBuilder builder = new CircuitGraphBuilder();
+    // CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
     // return new Module("", builder.getGraph(), ports);
     // }
 

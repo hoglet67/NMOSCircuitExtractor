@@ -17,15 +17,17 @@ import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
 import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class CircuitGraphBuilder {
-    protected String net_vss = "vss";
-    protected String net_vcc = "vcc";
+    protected String net_vss;
+    protected String net_vcc;
 
     protected Map<String, NetNode> netMap = new HashMap<String, NetNode>();
     protected Graph<CircuitNode, CircuitEdge> graph;
 
     protected Set<String> duplicate_map = new HashSet<String>();
 
-    public CircuitGraphBuilder() {
+    public CircuitGraphBuilder(String net_vss, String net_vcc) {
+        this.net_vss = net_vss;
+        this.net_vcc = net_vcc;
         graph = new DefaultDirectedGraph<CircuitNode, CircuitEdge>(CircuitEdge.class);
     }
 
