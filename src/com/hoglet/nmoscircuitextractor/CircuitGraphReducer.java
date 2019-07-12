@@ -545,13 +545,16 @@ public class CircuitGraphReducer {
         ps.println(tn);
         if (tn.getType() == NodeType.VT_MODULE) {
             for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
-                ps.println(String.format("%17s: %s", edge.getName(), graph.getEdgeTarget(edge)));
+                ps.println(String.format("%17s: [%s]", edge.getName(), graph.getEdgeTarget(edge)));
             }
         } else {
             dumpConnections(ps, "             gate", getConnections(tn, EdgeType.GATE));
             dumpConnections(ps, "          channel", getConnections(tn, EdgeType.CHANNEL));
             dumpConnections(ps, "           pullup", getConnections(tn, EdgeType.PULLUP));
             dumpConnections(ps, "      unspecified", getConnections(tn, EdgeType.UNSPECIFIED));
+            dumpConnections(ps, "            input", getConnections(tn, EdgeType.INPUT));
+            dumpConnections(ps, "           output", getConnections(tn, EdgeType.OUTPUT));
+            dumpConnections(ps, "    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
         }
         if (tn.getType() == NodeType.VT_EFET || tn.getType() == NodeType.VT_EFET_VSS) {
             ps.println("               fn: NOT(" + ((TransistorNode) tn).getFunction() + ")");
