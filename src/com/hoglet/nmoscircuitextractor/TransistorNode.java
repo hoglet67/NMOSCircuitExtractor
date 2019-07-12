@@ -17,7 +17,7 @@ public class TransistorNode extends CircuitNode {
     }
 
     public String toString() {
-        return getId() + "(" + getType().name() + ")";
+        return getId() + "(" + getType().name() + ")" + (isTree() ? "" : "#");
     }
 
 }

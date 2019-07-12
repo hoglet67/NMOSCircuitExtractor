@@ -27,7 +27,7 @@ public class CircuitGraphReducer {
     protected String net_vss = "vss";
     protected String net_vcc = "vcc";
 
-    protected Set<String> pullupSet = new TreeSet<String>();
+    protected Set<CircuitNode> pullupNetSet = new TreeSet<CircuitNode>();
     protected Graph<CircuitNode, CircuitEdge> graph;
 
     protected Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
@@ -36,22 +36,133 @@ public class CircuitGraphReducer {
         this.graph = graph;
         this.ignoreWarnings.addAll(ignoreWarnings);
         buildPullupSet();
+        buildNodeTypes();
     }
 
     private void buildPullupSet() {
-        System.out.println("Building pullup set");
+        System.out.println("Building net pullup set");
         for (CircuitNode node : graph.vertexSet()) {
             if (node.getType() == NodeType.VT_NET) {
                 for (CircuitEdge edge : graph.incomingEdgesOf(node)) {
                     CircuitNode source = graph.getEdgeSource(edge);
-                    if (source.getType() == NodeType.VT_DPULLUP || source.getType() == NodeType.VT_EPULLUP
-                            || source.getType() == NodeType.VT_EFET_VCC) {
-                        pullupSet.add(node.getId());
+                    if (source.isPullup()) {
+                        pullupNetSet.add(node);
+                        node.setTree(true);
                     }
                 }
             }
         }
-        System.out.println("Building pullup set done; size = " + pullupSet.size());
+        System.out.println("Building pullup net set done; size = " + pullupNetSet.size());
+    }
+
+    // ============================================================
+    // Device marking
+    // ============================================================
+
+    private void buildNodeTypes() {
+        System.out.println("Building node types");
+        // Find all pullups then mark the FETs in the corresponding pulldown
+        // tree
+        for (CircuitNode seed : graph.vertexSet()) {
+            if (seed.isPullup()) {
+                boolean debug = false;
+                debug |= seed.getId().equals("pullup1239");
+                for (CircuitEdge edge : graph.outgoingEdgesOf(seed)) {
+                    if (edge.getType() == EdgeType.GATE) {
+                        continue;
+                    }
+                    CircuitNode net = graph.getEdgeTarget(edge);
+                    seed.setTree(followIncomingConnections(net, seed, new HashSet<CircuitNode>(), 0, debug));
+                }
+            }
+        }
+
+        // A normal FET with both channels connected to nets with pullups is
+        // likely a bidirectional pass transistor
+        for (CircuitNode node1 : graph.vertexSet()) {
+            if (node1.getType() == NodeType.VT_EFET) {
+                node1.setPass(true);
+                for (CircuitEdge edge : graph.outgoingEdgesOf(node1)) {
+                    if (edge.getType() == EdgeType.CHANNEL) {
+                        CircuitNode net = graph.getEdgeTarget(edge);
+                        if (!pullupNetSet.contains(net)) {
+                            node1.setPass(false);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("Building device types done");
+    }
+
+    private String pad(int n) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < n; i++) {
+            sb.append("  ");
+        }
+        return sb.toString();
+    }
+
+    private boolean followIncomingConnections(CircuitNode net1, CircuitNode seed, Set<CircuitNode> visited, int depth,
+            boolean debug) {
+        if (net1.getType() != NodeType.VT_NET) {
+            throw new RuntimeException("corrupt graph: " + net1.getType().name());
+        }
+        visited.add(net1);
+        if (debug) {
+            System.out.println(pad(depth) + "Net " + net1 + ":");
+        }
+        boolean ret = false;
+        // Stop if you hit a pullup net other than the original
+        for (CircuitEdge edge1 : graph.incomingEdgesOf((net1))) {
+            if (edge1.getType() == EdgeType.CHANNEL || edge1.getType() == EdgeType.PULLUP) {
+                CircuitNode device = graph.getEdgeSource(edge1);
+                if (debug) {
+                    System.out.println(pad(depth) + "Checking for pullup: " + device);
+                }
+                if (device.isPullup() && !device.equals(seed)) {
+                    if (depth > 0) {
+                        if (debug) {
+                            System.out.println(pad(depth) + "Stopping because pullup encountered: " + device);
+                        }
+                        return ret;
+                    } else {
+                        System.out.println(pad(depth) + "Note: Multiple pullups on net: " + net1);
+                    }
+                }
+            }
+        }
+        for (CircuitEdge edge1 : graph.incomingEdgesOf((net1))) {
+            if (edge1.getType() == EdgeType.CHANNEL) {
+                boolean found = false;
+                CircuitNode device = graph.getEdgeSource(edge1);
+                if (device.getType() == NodeType.VT_EFET_VSS) {
+                    found = true;
+                } else {
+                    for (CircuitEdge edge2 : graph.outgoingEdgesOf(device)) {
+                        if (edge2.getType() == EdgeType.CHANNEL) {
+                            CircuitNode net2 = graph.getEdgeTarget(edge2);
+                            if (!visited.contains(net2)) {
+                                found = followIncomingConnections(net2, seed, visited, depth + 1, debug);
+                            }
+                        }
+                    }
+                }
+                if (found) {
+                    device.setTree(true);
+                    if (debug) {
+                        System.out.println(pad(depth) + device + " is part of a pulldown network");
+                    }
+                    ret = true;
+                }
+            }
+        }
+        if (debug) {
+            System.out.println(pad(depth) + "Net " + net1 + " = " + ret);
+        }
+        return ret;
     }
 
     // ============================================================
@@ -262,7 +373,8 @@ public class CircuitGraphReducer {
                 continue;
             }
 
-            // Record the components (transistors, internal nets) for later deletion (outside the iterator) in toDelete
+            // Record the components (transistors, internal nets) for later
+            // deletion (outside the iterator) in toDelete
             for (CircuitNode subcn : mod.getGraph().vertexSet()) {
                 if (!subcn.isExternal()) {
                     CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
@@ -280,7 +392,8 @@ public class CircuitGraphReducer {
             toAdd.put(modNode, ports);
             count++;
         }
-        // Delete the components from the graph that have been replaced by new modules
+        // Delete the components from the graph that have been replaced by new
+        // modules
         for (CircuitNode cn : toDelete) {
             graph.removeVertex(cn);
         }
@@ -301,13 +414,39 @@ public class CircuitGraphReducer {
 
     public void dumpStats() {
         // Calc distribution of nodes by node types
-        int[] nodeStats = new int[NodeType.values().length];
+        int[] nodeStatsNone = new int[NodeType.values().length];
+        int[] nodeStatsPass = new int[NodeType.values().length];
+        int[] nodeStatsTree = new int[NodeType.values().length];
+        int[] nodeStatsBoth = new int[NodeType.values().length];
+        int[] nodeStatsTotal = new int[NodeType.values().length];
         for (CircuitNode cn : graph.vertexSet()) {
-            nodeStats[cn.getType().ordinal()]++;
+            if (cn.isPass()) {
+                if (cn.isTree()) {
+                    nodeStatsBoth[cn.getType().ordinal()]++;
+                } else {
+                    nodeStatsPass[cn.getType().ordinal()]++;
+                }
+            } else {
+                if (cn.isTree()) {
+                    nodeStatsTree[cn.getType().ordinal()]++;
+                } else {
+                    nodeStatsNone[cn.getType().ordinal()]++;
+                }
+            }
+            nodeStatsTotal[cn.getType().ordinal()]++;
         }
         System.out.println("Node type distribution:");
-        for (int i = 0; i < nodeStats.length; i++) {
-            System.out.println("  " + NodeType.values()[i].name() + "  = " + nodeStats[i]);
+        System.out.println("        type :  none  pass  tree  both : total");
+        for (int i = 0; i < nodeStatsTotal.length; i++) {
+            System.out.print(String.format("%12s", NodeType.values()[i].name()));
+            System.out.print(" :");
+            System.out.print(String.format("%6d", nodeStatsNone[i]));
+            System.out.print(String.format("%6d", nodeStatsPass[i]));
+            System.out.print(String.format("%6d", nodeStatsTree[i]));
+            System.out.print(String.format("%6d", nodeStatsBoth[i]));
+            System.out.print(" :");
+            System.out.print(String.format("%6d", nodeStatsTotal[i]));
+            System.out.println();
         }
         // Distribution of nets by number of connections
         Map<Integer, Set<NetNode>> connectionMap = new TreeMap<Integer, Set<NetNode>>();
@@ -346,22 +485,26 @@ public class CircuitGraphReducer {
                 value2.add(net);
             }
         }
-        System.out.println("Net connectivity distribution:");
-        for (Map.Entry<Integer, Set<NetNode>> entry : connectionMap.entrySet()) {
-            System.out.print("  " + entry.getValue().size() + "\t" + entry.getKey());
-            if (entry.getValue().size() <= 100) {
-                System.out.print("\t" + entry.getValue());
-            }
-            System.out.println();
-        }
-        System.out.println("Net connectivity type distribution:");
-        for (Map.Entry<String, Set<NetNode>> entry : connectionTypeMap.entrySet()) {
-            System.out.print("  " + entry.getValue().size() + "\t" + entry.getKey());
-            if (entry.getValue().size() <= 100) {
-                System.out.print("\t" + entry.getValue());
-            }
-            System.out.println();
-        }
+        // System.out.println("Net connectivity distribution:");
+        // for (Map.Entry<Integer, Set<NetNode>> entry :
+        // connectionMap.entrySet()) {
+        // System.out.print(" " + entry.getValue().size() + "\t" +
+        // entry.getKey());
+        // if (entry.getValue().size() <= 100) {
+        // System.out.print("\t" + entry.getValue());
+        // }
+        // System.out.println();
+        // }
+        // System.out.println("Net connectivity type distribution:");
+        // for (Map.Entry<String, Set<NetNode>> entry :
+        // connectionTypeMap.entrySet()) {
+        // System.out.print(" " + entry.getValue().size() + "\t" +
+        // entry.getKey());
+        // if (entry.getValue().size() <= 100) {
+        // System.out.print("\t" + entry.getValue());
+        // }
+        // System.out.println();
+        // }
     }
 
     private void dumpConnections(PrintStream ps, String message, Set<NetNode> nets) {
@@ -377,7 +520,7 @@ public class CircuitGraphReducer {
                 sb.append(", ");
             }
             sb.append(net.toString());
-            if (!pullupSet.contains("" + net)) {
+            if (!pullupNetSet.contains(net)) {
                 sb.append('#');
             }
             first = false;

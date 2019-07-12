@@ -5,11 +5,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
+import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class NMOSCircuitExtractor {
 
     public static void main(String args[]) {
         try {
+
+            boolean validate = false;
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
 
@@ -76,7 +79,9 @@ public class NMOSCircuitExtractor {
 
             CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), ignoreWarnings);
             reducer.dumpStats();
-            reducer.validateGraph();
+            if (validate) {
+                reducer.validateGraph();
+            }
             reducer.dumpGraph(new File("netlist1.txt"));
 
             // Remove some known modules
@@ -85,7 +90,9 @@ public class NMOSCircuitExtractor {
                 reducer.replaceModule(mod);
             }
             reducer.dumpStats();
-            reducer.validateGraph();
+            if (validate) {
+                reducer.validateGraph();
+            }
             // Log the final graph
             reducer.dumpGraph(new File("netlist2.txt"));
 
@@ -93,8 +100,19 @@ public class NMOSCircuitExtractor {
             System.out.println("Combining transistors into gates");
             reducer.detectGates();
             reducer.dumpStats();
-            reducer.validateGraph();
+            if (validate) {
+                reducer.validateGraph();
+            }
             reducer.dumpGraph(new File("netlist3.txt"));
+
+            System.out.println("List of remaining VT_FET with tree attribute set");
+            for (CircuitNode cn : builder.getGraph().vertexSet()) {
+                if (cn.getType() == NodeType.VT_EFET) {
+                    if (cn.isTree()) {
+                        System.out.println(cn);
+                    }
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -9,11 +9,14 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
     private NodeType type;
     private String id;
     private boolean external;
+    private boolean tree;
+    private boolean pass;
 
     public CircuitNode(NodeType type, String id) {
         this.type = type;
         this.id = id;
         this.external = false;
+        this.tree = false;
     }
 
     public NodeType getType() {
@@ -28,6 +31,10 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
         return type == NodeType.VT_EFET || type == NodeType.VT_EFET_VSS;
     }
 
+    public boolean isPullup() {
+        return type == NodeType.VT_EPULLUP || type == NodeType.VT_DPULLUP || type == NodeType.VT_EFET_VCC;
+    }
+
     public String toString() {
         return id;
     }
@@ -38,6 +45,22 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
 
     public boolean isExternal() {
         return external;
+    }
+
+    public boolean isTree() {
+        return tree;
+    }
+
+    public void setTree(boolean tree) {
+        this.tree = tree;
+    }
+
+    public boolean isPass() {
+        return pass;
+    }
+
+    public void setPass(boolean pass) {
+        this.pass = pass;
     }
 
     @Override
