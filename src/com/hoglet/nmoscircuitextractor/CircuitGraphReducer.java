@@ -270,7 +270,7 @@ public class CircuitGraphReducer {
                         for (TransistorNode t2 : parallel) {
                             // System.out.println("P Merging " + t2 + " into " +
                             // t1);
-                            f.append(" OR ");
+                            f.append(" | ");
                             f.append(t2.getFunction());
                             // Move T2 gate connections to T1
                             copyEdges(t1, t2, EdgeType.GATE);
@@ -313,7 +313,7 @@ public class CircuitGraphReducer {
                     StringBuffer f = new StringBuffer();
                     f.append("(");
                     f.append(t1.getFunction());
-                    f.append(" AND ");
+                    f.append(" & ");
                     f.append(t2.getFunction());
                     f.append(")");
                     t1.setFunction(f.toString());
@@ -528,6 +528,7 @@ public class CircuitGraphReducer {
         }
         return sb.toString();
     }
+
     private void dumpConnections(PrintStream ps, String message, Set<NetNode> nets) {
         if (nets.size() == 0) {
             return;

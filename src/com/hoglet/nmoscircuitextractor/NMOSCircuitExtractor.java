@@ -71,13 +71,13 @@ public class NMOSCircuitExtractor {
             builder.addPin("_busak", EdgeType.INPUT);
 
             // See docs/InitialWarnings.txt for what each of these is
-            ignoreWarnings.add(new NetNode("45"));
-            ignoreWarnings.add(new NetNode("46"));
-            ignoreWarnings.add(new NetNode("47"));
-            ignoreWarnings.add(new NetNode("230"));
-            ignoreWarnings.add(new NetNode("1061"));
-            ignoreWarnings.add(new NetNode("2775"));
-            ignoreWarnings.add(new NetNode("2776"));
+            ignoreWarnings.add(new NetNode("n45"));
+            ignoreWarnings.add(new NetNode("n46"));
+            ignoreWarnings.add(new NetNode("n47"));
+            ignoreWarnings.add(new NetNode("n230"));
+            ignoreWarnings.add(new NetNode("n1061"));
+            ignoreWarnings.add(new NetNode("n2775"));
+            ignoreWarnings.add(new NetNode("n2776"));
 
             CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), net_vss, net_vcc, ignoreWarnings);
             reducer.dumpStats();
@@ -86,18 +86,18 @@ public class NMOSCircuitExtractor {
             }
             reducer.dumpGraph(new File("netlist1.txt"));
 
-            // Remove some known modules
-            System.out.println("Replacing modules");
-            ModuleGen moduleGen = new ModuleGen(net_vss, net_vcc);
-            for (Module mod : moduleGen.getModules()) {
-                reducer.replaceModule(mod);
-            }
-            reducer.dumpStats();
-            if (validate) {
-                reducer.validateGraph();
-            }
-            // Log the final graph
-            reducer.dumpGraph(new File("netlist2.txt"));
+            // // Remove some known modules
+            // System.out.println("Replacing modules");
+            // ModuleGen moduleGen = new ModuleGen(net_vss, net_vcc);
+            // for (Module mod : moduleGen.getModules()) {
+            // reducer.replaceModule(mod);
+            // }
+            // reducer.dumpStats();
+            // if (validate) {
+            // reducer.validateGraph();
+            // }
+            // // Log the final graph
+            // reducer.dumpGraph(new File("netlist2.txt"));
 
             // Try to detect gates
             System.out.println("Combining transistors into gates");
@@ -107,6 +107,10 @@ public class NMOSCircuitExtractor {
                 reducer.validateGraph();
             }
             reducer.dumpGraph(new File("netlist3.txt"));
+
+            // Generate verilog output
+            CircuitGraphWriter writer = new CircuitGraphWriter(builder.getGraph(), net_vss, net_vcc);
+            writer.writeVerilog(new File("verilog/chip_z80.v"));
 
         } catch (Exception e) {
             e.printStackTrace();

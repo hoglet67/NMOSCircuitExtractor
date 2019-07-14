@@ -12,9 +12,11 @@ public class CircuitEdge extends DefaultEdge {
 
     private EdgeType type;
     private String name;
+    private int port;
 
     public CircuitEdge() {
         this(EdgeType.UNSPECIFIED);
+        this.port = -1; // unassigned
     }
 
     public CircuitEdge(EdgeType type) {
@@ -36,6 +38,14 @@ public class CircuitEdge extends DefaultEdge {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
 }

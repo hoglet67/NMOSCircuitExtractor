@@ -1,0 +1,106 @@
+        type :  none  pass  tree  both : total
+      VT_NET :   329     0  1777     0 :  2106
+ VT_EFET_VSS :     7     0  1343     0 :  1350
+     VT_EFET :   210    71    19     0 :   300
+ VT_EFET_VCC :    63     0   207     0 :   270
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0  1070     0 :  1070
+   VT_MODULE :   709     0     0     0 :   709
+      VT_PIN :    38     0     0     0 :    38
+
+Added DualSuperBuffer
+
+Node type distribution:
+        type :  none  pass  tree  both : total
+      VT_NET :   329     0  1745     0 :  2074
+ VT_EFET_VSS :     7     0  1247     0 :  1254
+     VT_EFET :   210    71    19     0 :   300
+ VT_EFET_VCC :    63     0   143     0 :   206
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0  1038     0 :  1038
+   VT_MODULE :   741     0     0     0 :   741
+      VT_PIN :    38     0     0     0 :    38
+
+Added SuperNOR
+
+        type :  none  pass  tree  both : total
+      VT_NET :   329     0  1679     0 :  2008
+ VT_EFET_VSS :     7     0  1115     0 :  1122
+     VT_EFET :   210    71    19     0 :   300
+ VT_EFET_VCC :    63     0    77     0 :   140
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   972     0 :   972
+   VT_MODULE :   807     0     0     0 :   807
+      VT_PIN :    38     0     0     0 :    38
+
+Added PushPull
+
+        type :  none  pass  tree  both : total
+      VT_NET :   329     0  1679     0 :  2008
+ VT_EFET_VSS :     7     0  1054     0 :  1061
+     VT_EFET :   210    71    19     0 :   300
+ VT_EFET_VCC :    63     0     5     0 :    68
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   972     0 :   972
+   VT_MODULE :   879     0     0     0 :   879
+      VT_PIN :    38     0     0     0 :    38
+
+Removed Mux Modules
+
+Node type distribution:
+        type :  none  pass  tree  both : total
+      VT_NET :   328     0  1679     0 :  2007
+ VT_EFET_VSS :     7     0  1054     0 :  1061
+     VT_EFET :   229    71    19     0 :   319
+ VT_EFET_VCC :    63     0     5     0 :    68
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   972     0 :   972
+   VT_MODULE :   871     0     0     0 :   871
+      VT_PIN :    38     0     0     0 :    38
+
+Added SuperNAND
+
+        type :  none  pass  tree  both : total
+      VT_NET :   328     0  1678     0 :  2006
+ VT_EFET_VSS :     7     0  1052     0 :  1059
+     VT_EFET :   229    71    19     0 :   319
+ VT_EFET_VCC :    63     0     4     0 :    67
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   971     0 :   971
+   VT_MODULE :   872     0     0     0 :   872
+      VT_PIN :    38     0     0     0 :    38
+
+Added LatchPass
+
+        type :  none  pass  tree  both : total
+      VT_NET :   306     0  1678     0 :  1984
+ VT_EFET_VSS :     7     0  1052     0 :  1059
+     VT_EFET :   207    71    19     0 :   297
+ VT_EFET_VCC :    63     0     4     0 :    67
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   971     0 :   971
+   VT_MODULE :   872     0     0     0 :   872
+      VT_PIN :    38     0     0     0 :    38
+
+Added Q / NQ varients of all latches
+
+      VT_NET :   306     0  1620     0 :  1926   // 58 loadless nets removed
+ VT_EFET_VSS :     7     0  1052     0 :  1059
+     VT_EFET :   207    71    19     0 :   297
+ VT_EFET_VCC :    63     0     4     0 :    67
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   971     0 :   971
+   VT_MODULE :   872     0     0     0 :   872
+      VT_PIN :    38     0     0     0 :    38
+
+Removed crossCoupledTransistors2
+
+        type :  none  pass  tree  both : total
+      VT_NET :   306     0  1620     0 :  1926
+ VT_EFET_VSS :     7     0  1052     0 :  1059
+     VT_EFET :   207    71    19     0 :   297
+ VT_EFET_VCC :    63     0     4     0 :    67
+  VT_EPULLUP :    32     0     0     0 :    32
+  VT_DPULLUP :     0     0   973     0 :   973
+   VT_MODULE :   871     0     0     0 :   871
+      VT_PIN :    38     0     0     0 :    38

@@ -211,7 +211,7 @@ public class CircuitGraphBuilder {
             CircuitNode netNode = addNet(c2);
             graph.addEdge(tr, netNode).setType(EdgeType.CHANNEL);
         }
-        tr.setFunction("[" + gate + "]");
+        tr.setFunction("(" + gate + ")");
 
         return tr;
     }
@@ -253,12 +253,18 @@ public class CircuitGraphBuilder {
 
                 if (nameMap.containsKey(gateNet)) {
                     gateNet = nameMap.get(gateNet);
+                } else {
+                    gateNet = "n" + gateNet;
                 }
                 if (nameMap.containsKey(channel1Net)) {
                     channel1Net = nameMap.get(channel1Net);
+                } else {
+                    channel1Net = "n" + channel1Net;
                 }
                 if (nameMap.containsKey(channel2Net)) {
                     channel2Net = nameMap.get(channel2Net);
+                } else {
+                    channel2Net = "n" + channel2Net;
                 }
 
                 addTransistor(tr, gateNet, channel1Net, channel2Net);
@@ -279,6 +285,8 @@ public class CircuitGraphBuilder {
                     String net = parts[0].replace("[", "").trim();
                     if (nameMap.containsKey(net)) {
                         net = nameMap.get(net);
+                    } else {
+                        net = "n" + net;
                     }
                     pullupList.add(net);
                 }
