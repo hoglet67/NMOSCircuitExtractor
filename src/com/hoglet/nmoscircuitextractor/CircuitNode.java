@@ -11,12 +11,14 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
     private boolean external;
     private boolean tree;
     private boolean pass;
+    private boolean mark;
 
     public CircuitNode(NodeType type, String id) {
         this.type = type;
         this.id = id;
         this.external = false;
         this.tree = false;
+        this.mark = false;
     }
 
     public NodeType getType() {
@@ -61,6 +63,14 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
 
     public void setPass(boolean pass) {
         this.pass = pass;
+    }
+
+    public boolean isMark() {
+        return mark;
+    }
+
+    public void setMark(boolean mark) {
+        this.mark = mark;
     }
 
     @Override

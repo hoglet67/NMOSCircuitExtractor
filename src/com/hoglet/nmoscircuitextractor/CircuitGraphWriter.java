@@ -185,7 +185,11 @@ public class CircuitGraphWriter {
     public void writePullupNode(PrintStream ps, CircuitNode node) {
         CircuitEdge edge = graph.outgoingEdgesOf(node).iterator().next();
         CircuitNode net = graph.getEdgeTarget(edge);
-        ps.print("    transistor_pullup " + node.getId() + " (");
+        if (node.isMark()) {
+            ps.print("    transistor_pullup_strong " + node.getId() + " (");
+        } else {
+            ps.print("    transistor_pullup " + node.getId() + " (");
+        }
         ps.print(net + "_val" + ", ");
         ps.print(net + "_port" + edge.getPort());
         ps.println(");");

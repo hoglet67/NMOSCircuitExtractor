@@ -99,6 +99,11 @@ public class NMOSCircuitExtractor {
             // // Log the final graph
             // reducer.dumpGraph(new File("netlist2.txt"));
 
+            // Mark symetric modules
+            ModuleGen moduleGen = new ModuleGen(net_vss, net_vcc);
+            Module regMod = moduleGen.crossCoupledTransistors2Module();
+            reducer.markModules(regMod, "1"); // Mark the left pullup
+
             // Try to detect gates
             System.out.println("Combining transistors into gates");
             reducer.detectGates();

@@ -419,6 +419,51 @@ public class CircuitGraphReducer {
         System.out.println(mod.getName() + ": replaced " + count + " instances");
     }
 
+    public void markModules(Module mod, String id) {
+        // Look for instances of the subgraph in the main graph
+        IsomorphismInspector<CircuitNode, CircuitEdge> inspector = new VF2SubgraphIsomorphismInspector<CircuitNode, CircuitEdge>(
+                graph, mod.getGraph(), new CircuitNodeComparator(graph), new CircuitEdgeCompator());
+        Iterator<GraphMapping<CircuitNode, CircuitEdge>> it = inspector.getMappings();
+        int count = 0;
+        int marked = 0;
+        Set<CircuitNode> seenBefore = new HashSet<CircuitNode>();
+        while (it.hasNext()) {
+            GraphMapping<CircuitNode, CircuitEdge> mapping = it.next();
+
+            // Has this mapping already be handled (from another perspective)
+            // which can happen if the sub graph has internal symmetry
+            boolean visited = false;
+            for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+                if (!subcn.isExternal()) {
+                    CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+                    if (seenBefore.contains(cn)) {
+                        visited = true;
+                        break;
+                    }
+                }
+            }
+            if (visited) {
+                continue;
+            }
+
+            // Record the components (transistors, internal nets) for later
+            // deletion (outside the iterator) in toDelete
+            for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+                if (!subcn.isExternal()) {
+                    CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+                    if (subcn.getId().equals(id)) {
+                        cn.setMark(true);
+                        marked++;
+                    }
+                    seenBefore.add(cn);
+                }
+            }
+            count++;
+        }
+
+        System.out.println(mod.getName() + " seen " + count + " instances; marked " + marked);
+    }
+
     // ============================================================
     // Graph Output
     // ============================================================

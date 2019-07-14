@@ -391,7 +391,7 @@ public class ModuleGen {
         return new Module("crossCoupledTransistors1", builder.getGraph(), ports);
     }
 
-    private Module crossCoupledTransistors2Module() {
+    public Module crossCoupledTransistors2Module() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(100))); // output
