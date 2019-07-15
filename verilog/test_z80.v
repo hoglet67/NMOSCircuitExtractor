@@ -68,7 +68,9 @@ module main();
       db_i[7], db_o[7], db_t[7]
     );
 
-   assign db_i = 8'h3c; // inc a
+   assign db_i = 8'hf5; // f5 PUSH AF
+   // 3e LD a,n
+   // 3c inc a
 
    // ram_6502 _ram(eclk, ereset, clk, ab, db_i, db_o, _wr);
 
