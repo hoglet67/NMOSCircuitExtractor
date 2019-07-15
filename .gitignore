@@ -1,7 +1,4 @@
 bin/
-segdefs.js
-transdefs.js
-nodenames.js
 netlist1.txt
 netlist2.txt
 netlist3.txt

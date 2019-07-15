@@ -22,9 +22,9 @@ public class NMOSCircuitExtractor {
             String net_vss = "vss";
             String net_vcc = "vcc";
 
-            File transdefs = new File("transdefs.js");
-            File segdefs = new File("segdefs.js");
-            File nodenames = new File("nodenames.js");
+            File transdefs = new File("netlist/transdefs.js");
+            File segdefs = new File("netlist/segdefs.js");
+            File nodenames = new File("netlist/nodenames.js");
             CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
             builder.readNetlist(transdefs, segdefs, nodenames);
 
