@@ -449,12 +449,12 @@ public class CircuitGraphReducer {
             // Record the components (transistors, internal nets) for later
             // deletion (outside the iterator) in toDelete
             for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+                CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+                if (subcn.getId().equals(id)) {
+                    cn.setMark(true);
+                    marked++;
+                }
                 if (!subcn.isExternal()) {
-                    CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
-                    if (subcn.getId().equals(id)) {
-                        cn.setMark(true);
-                        marked++;
-                    }
                     seenBefore.add(cn);
                 }
             }

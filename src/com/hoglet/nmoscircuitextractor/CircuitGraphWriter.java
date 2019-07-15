@@ -170,7 +170,7 @@ public class CircuitGraphWriter {
                 System.out.println("Skipping driverless net: " + net);
                 continue;
             }
-            ps.print("    net_node_" + edges.size() + " " + net + "_node (eclk, erst, ");
+            ps.print("    net_node_" + edges.size() + "_init" + (net.isMark() ? "1" : "0") + " " + net + "_node (eclk, erst, ");
             int portnum = 0;
             for (CircuitEdge edge : edges) {
                 edge.setPort(portnum);
@@ -266,25 +266,31 @@ public class CircuitGraphWriter {
     // endmodule
 
     public void writeModulesPeter(PrintStream ps) {
-        for (int n : nodeSizes) {
-            ps.print("module net_node_" + n + "(input eclk, input erst, input " + WTYPE + " ");
-            for (int i = 0; i < n; i++) {
-                ps.print("i" + i + ", ");
+        for (int init = 0; init < 2; init++) {
+            for (int n : nodeSizes) {
+                ps.print("module net_node_" + n + "_init" + init + "(input eclk, input erst, input " + WTYPE + " ");
+                for (int i = 0; i < n; i++) {
+                    ps.print("i" + i + ", ");
+                }
+                ps.println("output reg " + WTYPE + " v);");
+                ps.print("wire " + WTYPE + " i = i0");
+                for (int i = 1; i < n; i++) {
+                    ps.print("+i" + i);
+                }
+                ps.println(";");
+                ps.println("    always @(posedge eclk)");
+                ps.println("        if (erst)");
+                if (init == 0) {
+                    ps.println("            v <= `LO2;");
+                } else {
+                    ps.println("            v <= `HI2;");
+                }
+                ps.println("        else");
+                ps.println("            v <= v + i;");
+                ps.println("endmodule");
             }
-            ps.println("output reg " + WTYPE + " v);");
-            ps.print("wire " + WTYPE + " i = i0");
-            for (int i = 1; i < n; i++) {
-                ps.print("+i" + i);
-            }
-            ps.println(";");
-            ps.println("    always @(posedge eclk)");
-            ps.println("        if (erst)");
-            ps.println("            v <= 0;");
-            ps.println("        else");
-            ps.println("            v <= v + i;");
-            ps.println("endmodule");
+            ps.println();
         }
-        ps.println();
     }
 
     public void writeFooter(PrintStream ps) {

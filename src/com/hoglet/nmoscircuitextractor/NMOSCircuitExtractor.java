@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
+import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class NMOSCircuitExtractor {
 
@@ -12,6 +13,8 @@ public class NMOSCircuitExtractor {
         try {
 
             boolean validate = true;
+
+            boolean verilog = true;
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
 
@@ -86,23 +89,24 @@ public class NMOSCircuitExtractor {
             }
             reducer.dumpGraph(new File("netlist1.txt"));
 
-            // // Remove some known modules
-            // System.out.println("Replacing modules");
-            // ModuleGen moduleGen = new ModuleGen(net_vss, net_vcc);
-            // for (Module mod : moduleGen.getModules()) {
-            // reducer.replaceModule(mod);
-            // }
-            // reducer.dumpStats();
-            // if (validate) {
-            // reducer.validateGraph();
-            // }
-            // // Log the final graph
-            // reducer.dumpGraph(new File("netlist2.txt"));
-
-            // Mark symetric modules
+            System.out.println("Replacing modules");
             ModuleGen moduleGen = new ModuleGen(net_vss, net_vcc);
-            Module regMod = moduleGen.crossCoupledTransistors2Module();
-            reducer.markModules(regMod, "1"); // Mark the left pullup
+            if (verilog) {
+                // Mark symmetric modules
+                Module mod = moduleGen.crossCoupledTransistors2Module();
+                reducer.markModules(mod, "100"); // Mark the left node
+            } else {
+                // Remove some known modules
+                for (Module mod : moduleGen.getModules()) {
+                    reducer.replaceModule(mod);
+                }
+            }
+            reducer.dumpStats();
+            if (validate) {
+                reducer.validateGraph();
+            }
+            // Log the final graph
+            reducer.dumpGraph(new File("netlist2.txt"));
 
             // Try to detect gates
             System.out.println("Combining transistors into gates");
@@ -113,9 +117,26 @@ public class NMOSCircuitExtractor {
             }
             reducer.dumpGraph(new File("netlist3.txt"));
 
+            Set<CircuitNode> toDelete = new HashSet<CircuitNode>();
+            for (CircuitNode node : builder.getGraph().vertexSet()) {
+                if (node.getType() == NodeType.VT_EPULLUP) {
+                    CircuitEdge edge = builder.getGraph().outgoingEdgesOf(node).iterator().next();
+                    CircuitNode net = builder.getGraph().getEdgeTarget(edge);
+                    if (net.getId().contains("pcbit")) {
+                        System.out.println("Removing pullup " + node.getId() + " on " + net.getId());
+                        toDelete.add(node);
+                    }
+                }
+            }
+            for (CircuitNode node : toDelete) {
+                builder.getGraph().removeVertex(node);
+            }
+
             // Generate verilog output
-            CircuitGraphWriter writer = new CircuitGraphWriter(builder.getGraph(), net_vss, net_vcc);
-            writer.writeVerilog(new File("verilog/chip_z80.v"));
+            if (verilog) {
+                CircuitGraphWriter writer = new CircuitGraphWriter(builder.getGraph(), net_vss, net_vcc);
+                writer.writeVerilog(new File("verilog/chip_z80.v"));
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
