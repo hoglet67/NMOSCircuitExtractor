@@ -111,26 +111,15 @@ public class NMOSCircuitExtractor {
             // Try to detect gates
             System.out.println("Combining transistors into gates");
             reducer.detectGates();
+
+            // Remove enhancement pullups
+            reducer.removeEnhancementPullups();
+
             reducer.dumpStats();
             if (validate) {
                 reducer.validateGraph();
             }
             reducer.dumpGraph(new File("netlist3.txt"));
-
-            Set<CircuitNode> toDelete = new HashSet<CircuitNode>();
-            for (CircuitNode node : builder.getGraph().vertexSet()) {
-                if (node.getType() == NodeType.VT_EPULLUP) {
-                    CircuitEdge edge = builder.getGraph().outgoingEdgesOf(node).iterator().next();
-                    CircuitNode net = builder.getGraph().getEdgeTarget(edge);
-                    if (net.getId().contains("pcbit")) {
-                        System.out.println("Removing pullup " + node.getId() + " on " + net.getId());
-                        toDelete.add(node);
-                    }
-                }
-            }
-            for (CircuitNode node : toDelete) {
-                builder.getGraph().removeVertex(node);
-            }
 
             // Generate verilog output
             if (verilog) {

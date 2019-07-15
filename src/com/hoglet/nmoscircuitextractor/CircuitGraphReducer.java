@@ -464,6 +464,22 @@ public class CircuitGraphReducer {
         System.out.println(mod.getName() + " seen " + count + " instances; marked " + marked);
     }
 
+    public void removeEnhancementPullups() {
+        Set<CircuitNode> toDelete = new HashSet<CircuitNode>();
+        for (CircuitNode node : graph.vertexSet()) {
+            if (node.getType() == NodeType.VT_EPULLUP) {
+                CircuitEdge edge = graph.outgoingEdgesOf(node).iterator().next();
+                CircuitNode net = graph.getEdgeTarget(edge);
+                if (net.getId().contains("pcbit")) {
+                    System.out.println("Removing pullup " + node.getId() + " on " + net.getId());
+                    toDelete.add(node);
+                }
+            }
+        }
+        for (CircuitNode node : toDelete) {
+            graph.removeVertex(node);
+        }
+    }
     // ============================================================
     // Graph Output
     // ============================================================
