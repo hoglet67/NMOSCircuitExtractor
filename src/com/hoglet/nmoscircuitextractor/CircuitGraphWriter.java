@@ -250,6 +250,17 @@ public class CircuitGraphWriter {
                     ps.print("i" + i + ", ");
                 }
                 ps.println("output reg " + WTYPE + " out);");
+//                ps.println();
+//                ps.println("function [`W-1:0] attenuate;   // reduce the strength of a driven analog signal");
+//                ps.println("input [`W-1:0] x;");
+//                ps.println("begin");
+//                ps.println("  if (x[3:1] > 3'b100)");
+//                ps.println("    attenuate = { x[3], x[2:1] - 1'b1, x[0] };");
+//                ps.println("  else");
+//                ps.println("    attenuate = x;");        
+//                ps.println("end");
+//                ps.println("endfunction");
+//                ps.println();
                 ps.print("    wire sel = (|i0[`B_DRIVEN])");
                 for (int i = 1; i < n; i++) {
                     ps.print(" | (|i" + i + "[`B_DRIVEN])");
@@ -271,6 +282,7 @@ public class CircuitGraphWriter {
                     ps.println("            out <= { `S_FLOATING, `L_HI};");
                 }
                 ps.println("        end else if (sel) begin");
+//                ps.println("            out <= attenuate(val);");
                 ps.println("            out <= val;");
                 ps.println("        end else begin");
                 ps.println("            out <= { `S_FLOATING, out[`B_LEVEL] };");

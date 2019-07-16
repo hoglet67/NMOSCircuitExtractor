@@ -1,17 +1,5 @@
 `include "common_ejlali.v"
 
-// Encoding:
-//
-// 00x - undriven
-// 010 - floating 1
-// 011 - floating 0
-// 100 - weak 1
-// 101 - weak 0
-// 110 - strong 1
-// 111 - strong 0
-//
-// These are carefully chosen so the largest value wins a conflict
-
 module pad_input(input pad, input [`W-1:0] internal_in, output [`W-1:0] internal_out);
    assign internal_out = { `S_STRONG, (pad ? `L_HI : `L_LO) };
 endmodule
@@ -31,8 +19,14 @@ module transistor_nmos(input g, input [`W-1:0] c1in, c2in, output reg [`W-1:0] c
   always @(*)
     begin
        if (g) begin
-          c1out = c2in;
-          c2out = c1in;
+          if (c2in[3:1] > 3'b100)
+            c1out = { c2in[3], c2in[2:1] - 1'b1, c2in[0] };
+          else
+            c1out = c2in;
+          if (c1in[3:1] > 3'b100)
+            c2out = { c1in[3], c1in[2:1] - 1'b1, c1in[0] };
+          else
+            c2out = c1in;
        end else begin
           c1out = { `S_OFF, `L_LO };
           c2out = { `S_OFF, `L_LO };
@@ -69,5 +63,5 @@ endmodule // transistor_nmos_vcc
 
 
 module transistor_pullup(input [`W-1:0] c1in, output [`W-1:0] c1out);
-   assign c1out = { `S_WEAK, `L_HI };
+   assign c1out = { `S_PULLUP, `L_HI };
 endmodule // transistor_pullup
