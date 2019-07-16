@@ -18,17 +18,17 @@ import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 public class CircuitGraphWriter {
 
     enum ModelType {
-        MONTA, EJLALI
+        MONTA, EJLALI, SATURATING
     };
 
-    protected static final ModelType model = ModelType.EJLALI;
+    protected static final ModelType model = ModelType.SATURATING;
 
     protected Graph<CircuitNode, CircuitEdge> graph;
     protected String net_vss;
     protected String net_vcc;
     protected Set<Integer> nodeSizes;
 
-    protected static String WTYPE = (model == ModelType.MONTA ? "signed " : "") + "[`W-1:0]";
+    protected static String WTYPE = (model == ModelType.EJLALI ? "" : "signed ") + "[`W-1:0]";
 
     public CircuitGraphWriter(Graph<CircuitNode, CircuitEdge> graph, String net_vss, String net_vcc) {
         this.graph = graph;
@@ -40,9 +40,12 @@ public class CircuitGraphWriter {
     public void writeHeader(PrintStream ps) {
         if (model == ModelType.MONTA) {
             ps.println("`include \"common_monta.v\"");
-        } else {
+        } else if (model == ModelType.EJLALI) {
             ps.println("`include \"common_ejlali.v\"");
-        }
+        } else {
+            ps.println("`include \"common_saturating.v\"");
+         }
+ 
         ps.println();
         ps.println("module chip_z80(");
         ps.println("    input eclk");
@@ -72,10 +75,10 @@ public class CircuitGraphWriter {
         ps.println("function v;   // convert an analog node value to 2-level");
         ps.println("input [`W-1:0] x;");
         ps.println("begin");
-        if (model == ModelType.MONTA) {
-            ps.println("  v = ~x[`W-1];");
-        } else {
+        if (model == ModelType.EJLALI) {
             ps.println("  v = x[`B_LEVEL] ? `L_HI : `L_LO;");
+        } else {
+            ps.println("  v = ~x[`W-1];");
         }
         ps.println("end");
         ps.println("endfunction");
@@ -83,10 +86,10 @@ public class CircuitGraphWriter {
         ps.println("function [`W-1:0] a;   // convert a 2-level node value to analog");
         ps.println("input x;");
         ps.println("begin");
-        if (model == ModelType.MONTA) {
-            ps.println("  a = x ? `HI2 : `LO2;");
-        } else {
+        if (model == ModelType.EJLALI) {
             ps.println("  a = {`S_STRONG, x ? `L_HI : `L_LO};");
+        } else {
+            ps.println("  a = x ? `HI2 : `LO2;");
         }
         ps.println("end");
         ps.println("endfunction");
@@ -245,11 +248,11 @@ public class CircuitGraphWriter {
 
             for (int n : nodeSizes) {
 
-                ps.print("module net_node_" + n + "_init" + init + "(input eclk, input erst, input " + WTYPE + " ");
+                ps.print("module net_node_" + n + "_init" + init + "(input eclk, input erst, input [`W-1:0] ");
                 for (int i = 0; i < n; i++) {
                     ps.print("i" + i + ", ");
                 }
-                ps.println("output reg " + WTYPE + " out);");
+                ps.println("output reg [`W-1:0] out);");
 //                ps.println();
 //                ps.println("function [`W-1:0] attenuate;   // reduce the strength of a driven analog signal");
 //                ps.println("input [`W-1:0] x;");
@@ -309,12 +312,12 @@ public class CircuitGraphWriter {
     public void writeModulesMonta(PrintStream ps) {
         for (int init = 0; init < 2; init++) {
             for (int n : nodeSizes) {
-                ps.print("module net_node_" + n + "_init" + init + "(input eclk, input erst, input " + WTYPE + " ");
+                ps.print("module net_node_" + n + "_init" + init + "(input eclk, input erst, input signed [`W-1:0] ");
                 for (int i = 0; i < n; i++) {
                     ps.print("i" + i + ", ");
                 }
-                ps.println("output reg " + WTYPE + " v);");
-                ps.print("wire " + WTYPE + " i = i0");
+                ps.println("output reg signed [`W-1:0] v);");
+                ps.print("wire signed [`W-1:0] i = i0");
                 for (int i = 1; i < n; i++) {
                     ps.print("+i" + i);
                 }
@@ -334,6 +337,35 @@ public class CircuitGraphWriter {
         }
     }
 
+    public void writeModulesSaturating(PrintStream ps) {
+        for (int init = 0; init < 2; init++) {
+            for (int n : nodeSizes) {
+                ps.print("module net_node_" + n + "_init" + init + "(input eclk, input erst, input signed [`W-1:0] ");
+                for (int i = 0; i < n; i++) {
+                    ps.print("i" + i + ", ");
+                }
+                ps.println("output reg signed [`W-1:0] v);");
+                ps.print("wire signed [`W-1:0] i = i0");
+                for (int i = 1; i < n; i++) {
+                    ps.print("+i" + i);
+                }
+                ps.println(";");
+                ps.println("wire signed [`W:0] vnext = v + i;");
+                ps.println("    always @(posedge eclk)");
+                ps.println("        if (erst)");
+                if (init == 0) {
+                    ps.println("            v <= `LO2;");
+                } else {
+                    ps.println("            v <= `HI2;");
+                }
+                ps.println("        else if (vnext[`W] == vnext[`W-1])");
+                ps.println("            v <= vnext;");
+                ps.println("endmodule");
+            }
+            ps.println();
+        }
+    }
+
     public void writeFooter(PrintStream ps) {
         ps.println("endmodule");
         ps.println();
@@ -347,8 +379,10 @@ public class CircuitGraphWriter {
         writeFooter(ps);
         if (model == ModelType.MONTA) {
             writeModulesMonta(ps);
-        } else {
+        } else if (model == ModelType.EJLALI) {
             writeModulesEjlali(ps);
+        } else {
+            writeModulesSaturating(ps);
         }
         System.out.println("Writing verilog done");
     }
