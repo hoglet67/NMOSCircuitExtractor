@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.hoglet.nmoscircuitextractor.CircuitEdge.EdgeType;
-import com.hoglet.nmoscircuitextractor.CircuitNode.NodeType;
 
 public class NMOSCircuitExtractor {
 

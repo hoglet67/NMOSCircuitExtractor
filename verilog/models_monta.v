@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2010 Peter Monta
 
-`include "common.v"
+`include "common_monta.v"
 
 module pad_input(input p, input signed [`W-1:0] v, output signed [`W-1:0] i);
   wire [`W-1:0] vp = p ? `HI : `LO;
