@@ -21,7 +21,7 @@ public class CircuitGraphWriter {
         MONTA, EJLALI, SATURATING
     };
 
-    protected static final ModelType model = ModelType.SATURATING;
+    protected static final ModelType model = ModelType.MONTA;
 
     protected Graph<CircuitNode, CircuitEdge> graph;
     protected String net_vss;

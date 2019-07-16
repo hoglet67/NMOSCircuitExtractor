@@ -6,9 +6,7 @@ public class SimulateDevices {
     public static final int WMASK = (1 << W) - 1;
 
     public static final int HI = 3 << (W - 3);
-    public static final int LO = -(2 << (W - 3));
-    public static final int HI2 = 2 << (W - 4);
-    public static final int LO2 = -(2 << (W - 4));
+    public static final int LO = -(3 << (W - 3));
 
     public static void rangeCheckSigned(String s, int i, int w) {
         int min = -(1 << (w - 1));
@@ -24,6 +22,14 @@ public class SimulateDevices {
         if (i < min || i > max) {
             throw new RuntimeException(s + ": out of unsigned range: (" + min + " .. " + max + "):" + i);
         }
+    }
+
+    public static int abs(int i) {
+        return i >= 0 ? i : -i;
+    }
+    
+    public static int sign(int i) {
+        return i >= 0 ? 1 : -1;
     }
 
     // module transistor_pullup(input signed [`W-1:0] v, output signed [`W-1:0]
@@ -53,11 +59,11 @@ public class SimulateDevices {
     public static int transistor_nmos(String id, boolean g, int vd, int vs) {
         int vsd = vd - vs;
         rangeCheckSigned("transistor " + id + ": vsd", vsd, W + 1);
-        int isd = vsd >> 2;
-        rangeCheckSigned("transistor " + id + ": isd", isd, W - 1);
+        int isd = abs(vsd) >> 1;
+        rangeCheckSigned("transistor " + id + ": isd", isd, W);
         int i = g ? isd : 0;
         rangeCheckSigned("transistor " + id + ": i", i, W);
-        return i; // returns is
+        return sign(vsd) * i; // returns is
     }
 
     // module transistor_nmos_vss(input g, input signed [`W-1:0] vd, output
@@ -147,7 +153,9 @@ public class SimulateDevices {
                 is3 = i3;
             }
 
-            i4 = transistor_nmos_vss("t4", true, v3);
+            // i4 = transistor_nmos_vss("t4", true, v3);
+
+            i4 = -transistor_nmos("t4", true, v3, LO);
 
             System.out.println(String.format(" : i1 = %3d; i2 = %3d; i3 = %3d; i4 = %3d", i1, i2, i3, i4));
 
