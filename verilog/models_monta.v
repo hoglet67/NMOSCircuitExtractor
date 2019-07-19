@@ -24,7 +24,7 @@ endmodule
 
 module transistor_nmos(input g, input signed [`W-1:0] vs,vd, output signed [`W-1:0] is,id);
   wire signed [`W:0] vsd = {vd[`W-1],vd} - {vs[`W-1],vs};
-  wire signed [`W-1:0] isd = {vsd[`W:1]};
+  wire signed [`W-1:0] isd = {vsd[`W],vsd[`W:2]};
   wire signed [`W-1:0] i = g ? isd : 0;
   assign is = i;
   assign id = -i;
@@ -33,7 +33,7 @@ endmodule
 module transistor_nmos_vcc(input g, input signed [`W-1:0] vs, output signed [`W-1:0] is);
   wire signed [`W-1:0] vd = `HI;
   wire signed [`W:0] vsd = {vd[`W-1],vd} - {vs[`W-1],vs};
-  wire signed [`W-1:0] isd = {vsd[`W:1]};
+  wire signed [`W-1:0] isd = {vsd[`W],vsd[`W:2]};
   wire signed [`W-1:0] i = g ? isd : 0;
   assign is = i;
 endmodule
@@ -41,7 +41,7 @@ endmodule
 module transistor_nmos_vss(input g, input signed [`W-1:0] vd, output signed [`W-1:0] id);
   wire signed [`W-1:0] vs = `LO;
   wire signed [`W:0] vsd = {vd[`W-1],vd} - {vs[`W-1],vs};
-  wire signed [`W-1:0] isd = {vsd[`W:1]};
+  wire signed [`W-1:0] isd = {vsd[`W], vsd[`W:2]};
   wire signed [`W-1:0] i = g ? isd : 0;
   assign id = -i;
 endmodule
