@@ -3,9 +3,11 @@ package com.hoglet.nmoscircuitextractor;
 public class FunctionNode extends CircuitNode {
 
     private String function = null;
+    private boolean init;
 
     public FunctionNode(String id) {
         super(NodeType.VT_FUNCTION, id);
+        init = false;
     }
 
     public String toString() {
@@ -18,6 +20,14 @@ public class FunctionNode extends CircuitNode {
 
     public void setFunction(String function) {
         this.function = function;
+    }
+
+    public boolean getInit() {
+        return init;
+    }
+
+    public void setInit(boolean init) {
+        this.init = init;
     }
 
 }

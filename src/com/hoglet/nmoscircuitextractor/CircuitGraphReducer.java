@@ -515,19 +515,18 @@ public class CircuitGraphReducer {
             case PULLUP:
                 return false;
             case CHANNEL:
-                return false;
-            // if (node.getType() == NodeType.VT_EFET) {
-            // Set<NetNode> channels = getChannelNets((TransistorNode) node);
-            // channels.remove(net);
-            // NetNode other = channels.iterator().next();
-            // visited.add(node);
-            // if (!isDigitalNode(visited, other)) {
-            // return false;
-            // }
-            // } else {
-            // return false;
-            // }
-            // break;
+                if (node.getType() == NodeType.VT_EFET) {
+                    Set<NetNode> channels = getChannelNets((TransistorNode) node);
+                    channels.remove(net);
+                    NetNode other = channels.iterator().next();
+                    visited.add(node);
+                    if (!isDigitalNode(visited, other)) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+                break;
             }
         }
         return true;
@@ -572,6 +571,7 @@ public class CircuitGraphReducer {
                 NetNode output = getChannelNets(tn).iterator().next();
                 FunctionNode mod = new FunctionNode(output.getId());
                 mod.setFunction(tn.getFunction());
+                mod.setInit(output.isMark());
                 graph.addVertex(mod);
                 graph.addEdge(mod, output).setType(EdgeType.OUTPUT);
                 for (NetNode net : getGateNets(tn)) {

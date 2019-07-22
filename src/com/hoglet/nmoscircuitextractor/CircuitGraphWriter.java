@@ -134,11 +134,11 @@ public class CircuitGraphWriter {
         Set<CircuitEdge> edges = getValidEdges(node);
         for (CircuitEdge edge : edges) {
             NetNode net = (NetNode) graph.getEdgeTarget(edge);
-            // if (net.isDigital()) {
-            // ps.print("a( " + net + "), ");
-            // } else {
-            ps.print(net + "_val" + ", ");
-            // }
+            if (net.isDigital()) {
+                ps.print("a(" + net + "), ");
+            } else {
+                ps.print(net + "_val" + ", ");
+            }
         }
         boolean first = true;
         for (CircuitEdge edge : edges) {
@@ -146,9 +146,9 @@ public class CircuitGraphWriter {
                 ps.println(", ");
             }
             NetNode net = (NetNode) graph.getEdgeTarget(edge);
-            // if (!net.isDigital()) {
-            ps.print(net + "_port" + edge.getPort());
-            // }
+            if (!net.isDigital()) {
+                ps.print(net + "_port" + edge.getPort());
+            }
             first = false;
         }
         ps.println(");");
@@ -232,8 +232,9 @@ public class CircuitGraphWriter {
     }
 
     public void writeFunctionNode(PrintStream ps, FunctionNode node) {
-        ps.print("    transistor_function f_" + node.getId() + "(");
-        ps.print("eclk, erst, ");
+        ps.print("    transistor_function_init" + (node.getInit() ? "1" : "0"));
+        ps.print(" f_" + node.getId() + "_init");
+        ps.print("(eclk, erst, ");
         ps.print(node.getFunction());
         ps.print(",");
         ps.print(node.getId());
