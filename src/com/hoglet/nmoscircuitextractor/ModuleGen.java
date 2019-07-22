@@ -85,6 +85,23 @@ public class ModuleGen {
         return new Module("superNOR", builder.getGraph(), ports);
     }
 
+    private Module superNORAltModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
+        ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
+        ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
+        ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
+        builder.addPullup("1", 110);
+        builder.addPullup("2", 111);
+        builder.addTransistor("200", 100, 110, net_vss);
+        builder.addTransistor("201", 101, 110, net_vss);
+        builder.addTransistor("202", 110, 111, net_vss);
+        builder.addTransistor("203", 101, 111, net_vss);
+        builder.addTransistor("204", 111, 102, net_vcc);
+        builder.addTransistor("205", 110, 102, net_vss);
+        return new Module("superNORAlt", builder.getGraph(), ports);
+    }
+
     private Module superNANDModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
@@ -473,6 +490,21 @@ public class ModuleGen {
         return new Module("pass8", builder.getGraph(), ports);
     }
 
+    public List<Module> getSuperModules() {
+        List<Module> list = new LinkedList<Module>();
+        list.add(z80ABPinDriverModule());
+        list.add(z80DBLatchModule());
+        list.add(z80IRLatchModule());
+        list.add(superNORModule());
+        list.add(superNORAltModule());
+        list.add(superNANDModule());
+        list.add(superComplementaryModule());
+        list.add(superInvertorModule());
+        list.add(superBufferModule());
+        list.add(pushPullModule());
+        return list;
+    }
+
     public List<Module> getModules() {
         List<Module> list = new LinkedList<Module>();
         // Complex modules
@@ -487,6 +519,7 @@ public class ModuleGen {
         list.add(xor2Module());
         list.add(xnor2Module());
         list.add(superNORModule());
+        list.add(superNORAltModule());
         list.add(superNANDModule());
         list.add(superComplementaryModule());
         list.add(superInvertorModule());

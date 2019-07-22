@@ -480,6 +480,79 @@ public class CircuitGraphReducer {
             graph.removeVertex(node);
         }
     }
+
+    // Follow the channel connections, tracking the following end points:
+    //
+    // Starting at a pullup / efet_vss, count:
+    // - gate connections
+    // - follow channels
+    // - terminate at any of: pullup, efet_vss, efet_vcc
+    //
+    // Really trying to determine if set of channel connected nodes are
+    // gate-only
+    public boolean isDigitalNode(Set<CircuitNode> visited, NetNode net) {
+        for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
+            CircuitNode node = graph.getEdgeSource(edge);
+            // Ignore edges to components that have already been visited
+            if (visited.contains(node)) {
+                continue;
+            }
+            switch (edge.getType()) {
+            case INPUT:
+            case GATE:
+                continue;
+            case OUTPUT:
+            case BIDIRECTIONAL:
+            case UNSPECIFIED:
+            case PULLUP:
+                return false;
+            case CHANNEL:
+                if (node.getType() == NodeType.VT_EFET) {
+                    Set<NetNode> channels = getChannelNets((TransistorNode) node);
+                    channels.remove(net);
+                    NetNode other = channels.iterator().next();
+                    visited.add(node);
+                    if (!isDigitalNode(visited, other)) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+                break;
+            }
+        }
+        return true;
+    }
+
+    public void markDigitalNodes() {
+        System.out.println("Marking digital nodes");
+        int num_digital = 0;
+        int num_analog = 0;
+        for (CircuitNode cn : graph.vertexSet()) {
+            if (cn.getType() == NodeType.VT_DPULLUP) {
+                boolean isDigital = false;
+                NetNode net = getConnections(cn, EdgeType.PULLUP).iterator().next();
+                for (CircuitNode node : getNeighbours(net)) {
+                    if (node.getType() == NodeType.VT_EFET_VSS) {
+                        Set<CircuitNode> visited = new HashSet<CircuitNode>();
+                        visited.add(cn); // Add the pullup
+                        visited.add(node); // Add the driving transistor
+                        isDigital = isDigitalNode(visited, net);
+                        break;
+                    }
+                }
+                if (isDigital) {
+                    num_digital++;
+                } else {
+                    num_analog++;
+                }
+            }
+        }
+        System.out.println(" num_digital = " + num_digital);
+        System.out.println(" num_analog  = " + num_analog);
+        System.out.println("Marking digital nodes done");
+
+    }
     // ============================================================
     // Graph Output
     // ============================================================

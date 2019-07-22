@@ -104,6 +104,7 @@ public class NMOSCircuitExtractor {
             if (validate) {
                 reducer.validateGraph();
             }
+
             // Log the final graph
             reducer.dumpGraph(new File("netlist2.txt"));
 
@@ -119,6 +120,8 @@ public class NMOSCircuitExtractor {
                 reducer.validateGraph();
             }
             reducer.dumpGraph(new File("netlist3.txt"));
+
+            reducer.markDigitalNodes();
 
             // Generate verilog output
             if (verilog) {
