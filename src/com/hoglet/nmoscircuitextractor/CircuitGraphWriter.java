@@ -98,7 +98,7 @@ public class CircuitGraphWriter {
 
     public void writePadNode(PrintStream ps, CircuitNode node) {
         CircuitEdge edge = graph.outgoingEdgesOf(node).iterator().next();
-        CircuitNode net = graph.getEdgeTarget(edge);
+        NetNode net = (NetNode) graph.getEdgeTarget(edge);
         String name = net.getId();
         switch (edge.getType()) {
         case INPUT:
@@ -133,16 +133,22 @@ public class CircuitGraphWriter {
         ps.print(" " + node.getId() + "(" + node.getFunction() + ",");
         Set<CircuitEdge> edges = getValidEdges(node);
         for (CircuitEdge edge : edges) {
-            CircuitNode net = graph.getEdgeTarget(edge);
+            NetNode net = (NetNode) graph.getEdgeTarget(edge);
+            // if (net.isDigital()) {
+            // ps.print("a( " + net + "), ");
+            // } else {
             ps.print(net + "_val" + ", ");
+            // }
         }
         boolean first = true;
         for (CircuitEdge edge : edges) {
             if (!first) {
                 ps.println(", ");
             }
-            CircuitNode net = graph.getEdgeTarget(edge);
+            NetNode net = (NetNode) graph.getEdgeTarget(edge);
+            // if (!net.isDigital()) {
             ps.print(net + "_port" + edge.getPort());
+            // }
             first = false;
         }
         ps.println(");");
@@ -170,22 +176,29 @@ public class CircuitGraphWriter {
 
         for (NetNode net : nets) {
             String id = net.getId();
-            Set<CircuitEdge> edges = getValidEdges(net);
-            if (edges.size() == 0) {
-                System.out.println("Skipping driverless net: " + net);
-                continue;
+            if (net.isDigital()) {
+                ps.println("    wire " + id + ";");
+            } else {
+                Set<CircuitEdge> edges = getValidEdges(net);
+                if (edges.size() == 0) {
+                    System.out.println("Skipping driverless net: " + net);
+                    continue;
+                }
+                for (int i = 0; i < edges.size(); i++) {
+                    ps.println("    wire " + WTYPE + " " + id + "_port" + i + ";");
+                }
+                ps.println("    wire " + WTYPE + " " + id + "_val;");
+                ps.println("    wire " + id + " = v(" + id + "_val);");
             }
-            for (int i = 0; i < edges.size(); i++) {
-                ps.println("    wire " + WTYPE + " " + id + "_port" + i + ";");
-            }
-            ps.println("    wire " + WTYPE + " " + id + "_val;");
-            ps.println("    wire " + id + " = v(" + id + "_val);");
         }
         ps.println();
 
         // net_node_2 id_node (eclk, erst, id_port_0, id_port_1, ... id_val);
 
         for (NetNode net : nets) {
+            if (net.isDigital()) {
+                continue;
+            }
             Set<CircuitEdge> edges = getValidEdges(net);
             if (edges.size() == 0) {
                 System.out.println("Skipping driverless net: " + net);
@@ -218,6 +231,15 @@ public class CircuitGraphWriter {
         // // pullup " + net);
     }
 
+    public void writeFunctionNode(PrintStream ps, FunctionNode node) {
+        ps.print("    transistor_function f_" + node.getId() + "(");
+        ps.print("eclk, erst, ");
+        ps.print(node.getFunction());
+        ps.print(",");
+        ps.print(node.getId());
+        ps.println(");");
+    }
+
     public void writeDeviceNodes(PrintStream ps) {
         for (CircuitNode node : graph.vertexSet()) {
             switch (node.getType()) {
@@ -235,6 +257,9 @@ public class CircuitGraphWriter {
             case VT_DPULLUP:
             case VT_EPULLUP:
                 writePullupNode(ps, node);
+                break;
+            case VT_FUNCTION:
+                writeFunctionNode(ps, (FunctionNode) node);
                 break;
             default:
                 throw new RuntimeException("Not implemented yet: " + node.getType());

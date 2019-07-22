@@ -2,6 +2,7 @@ bin/
 netlist1.txt
 netlist2.txt
 netlist3.txt
+netlist4.txt
 verilog/chip_z80.v
 iverilog/a.out
 iverilog/test_z80.lxt

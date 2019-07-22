@@ -197,6 +197,14 @@ public class CircuitGraphReducer {
         return nets;
     }
 
+    private Set<NetNode> getGateNets(TransistorNode tn) {
+        Set<NetNode> nets = getConnections(tn, EdgeType.GATE);
+        if (nets.size() == 0) {
+            throw new RuntimeException(tn + " has no gate connections");
+        }
+        return nets;
+    }
+
     private Set<NetNode> getChannelNets(TransistorNode tn) {
         Set<NetNode> nets = getConnections(tn, EdgeType.CHANNEL);
         // Sanity check transistor has the expected number of channel
@@ -507,55 +515,96 @@ public class CircuitGraphReducer {
             case PULLUP:
                 return false;
             case CHANNEL:
-                if (node.getType() == NodeType.VT_EFET) {
-                    Set<NetNode> channels = getChannelNets((TransistorNode) node);
-                    channels.remove(net);
-                    NetNode other = channels.iterator().next();
-                    visited.add(node);
-                    if (!isDigitalNode(visited, other)) {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-                break;
+                return false;
+            // if (node.getType() == NodeType.VT_EFET) {
+            // Set<NetNode> channels = getChannelNets((TransistorNode) node);
+            // channels.remove(net);
+            // NetNode other = channels.iterator().next();
+            // visited.add(node);
+            // if (!isDigitalNode(visited, other)) {
+            // return false;
+            // }
+            // } else {
+            // return false;
+            // }
+            // break;
             }
         }
         return true;
     }
 
-    public void markDigitalNodes() {
-        System.out.println("Marking digital nodes");
-        Set<NetNode> digitalMod = new TreeSet<NetNode>();
-        Set<NetNode> digitalTr = new TreeSet<NetNode>();
+    public void replaceDigitalNodes() {
+        int count = 0;
+        System.out.println("Replacing digital nodes");
+        Set<CircuitNode> toDelete = new HashSet<CircuitNode>();
+        for (CircuitNode cn : graph.vertexSet()) {
+            if (cn.getType() == NodeType.VT_NET) {
+                NetNode net = (NetNode) cn;
+                Set<CircuitNode> visited = new HashSet<CircuitNode>();
+                CircuitNode pullup = null;
+                CircuitNode efet_vss = null;
+                for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
+                    CircuitNode node = graph.getEdgeSource(edge);
+                    if (pullup == null && node.getType() == NodeType.VT_DPULLUP) {
+                        visited.add(node);
+                        pullup = node;
+                    }
+                    if (efet_vss == null && node.getType() == NodeType.VT_EFET_VSS && edge.getType() == EdgeType.CHANNEL) {
+                        visited.add(node);
+                        efet_vss = node;
+                    }
+                    if (pullup != null && efet_vss != null) {
+                        if (isDigitalNode(visited, net)) {
+                            toDelete.add(pullup);
+                            toDelete.add(efet_vss);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        for (CircuitNode cn : toDelete) {
+            if (cn.getType() == NodeType.VT_DPULLUP) {
+                graph.removeVertex(cn);
+            }
+            if (cn.getType() == NodeType.VT_EFET_VSS) {
+                TransistorNode tn = (TransistorNode) cn;
+                NetNode output = getChannelNets(tn).iterator().next();
+                FunctionNode mod = new FunctionNode(output.getId());
+                mod.setFunction(tn.getFunction());
+                graph.addVertex(mod);
+                graph.addEdge(mod, output).setType(EdgeType.OUTPUT);
+                for (NetNode net : getGateNets(tn)) {
+                    graph.addEdge(mod, net).setType(EdgeType.INPUT);
+                }
+                graph.removeVertex(tn);
+                count++;
+            }
+        }
+        System.out.println("    replaced " + count + " transistor/pullup pairs");
+        System.out.println("Done replacing digital nodes");
+    }
+
+    public void markDigitalNets() {
+        System.out.println("Marking digital nets");
+        Set<NetNode> digital = new TreeSet<NetNode>();
         Set<NetNode> analog = new TreeSet<NetNode>();
         for (CircuitNode cn : graph.vertexSet()) {
             if (cn.getType() == NodeType.VT_NET) {
                 boolean isDigital = false;
                 NetNode net = (NetNode) cn;
                 Set<CircuitNode> visited = new HashSet<CircuitNode>();
-                boolean found_pullup = false;
-                boolean found_efet_vss = false;
                 for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
                     CircuitNode node = graph.getEdgeSource(edge);
-                    if (node.getType() == NodeType.VT_MODULE && edge.getType() == EdgeType.OUTPUT) {
+                    if ((node.getType() == NodeType.VT_FUNCTION || node.getType() == NodeType.VT_MODULE)
+                            && edge.getType() == EdgeType.OUTPUT) {
                         visited.add(node);
                         isDigital = isDigitalNode(visited, net);
                         if (isDigital) {
-                            digitalMod.add(net);
-                        }
-                        break;
-                    } else if (!found_pullup && node.getType() == NodeType.VT_DPULLUP) {
-                        visited.add(node);
-                        found_pullup = true;
-                    } else if (!found_efet_vss && node.getType() == NodeType.VT_EFET_VSS && edge.getType() == EdgeType.CHANNEL) {
-                        visited.add(node);
-                        found_efet_vss = true;
-                    }
-                    if (found_pullup && found_efet_vss) {
-                        isDigital = isDigitalNode(visited, net);
-                        if (isDigital) {
-                            digitalTr.add(net);
+                            digital.add(net);
+                            net.setDigital(true);
+                        } else {
+                            System.out.println("Warning: Module output drives " + net + " that is not marked as digital");
                         }
                         break;
                     }
@@ -565,12 +614,8 @@ public class CircuitGraphReducer {
                 }
             }
         }
-        System.out.println("Nets driven by digital module outputs:");
-        for (NetNode net : digitalMod) {
-            System.out.println("    " + net);
-        }
-        System.out.println("Nets driven by digital transistor outputs:");
-        for (NetNode net : digitalTr) {
+        System.out.println("Nets driven that are digital:");
+        for (NetNode net : digital) {
             System.out.println("    " + net);
         }
         System.out.println("Nets driven that are analog:");
@@ -578,10 +623,9 @@ public class CircuitGraphReducer {
             System.out.println("    " + net);
         }
         System.out.println("Summary:");
-        System.out.println(" num_digital_mod = " + digitalMod.size());
-        System.out.println(" num_digital_tr  = " + digitalTr.size());
-        System.out.println(" num_analog      = " + analog.size());
-        System.out.println("Marking digital nodes done");
+        System.out.println(" num_digital  = " + digital.size());
+        System.out.println(" num_analog   = " + analog.size());
+        System.out.println("Marking digital nets done");
 
     }
     // ============================================================
@@ -714,7 +758,7 @@ public class CircuitGraphReducer {
 
     private void dumpNode(PrintStream ps, CircuitNode tn) {
         ps.println(tn);
-        if (tn.getType() == NodeType.VT_MODULE) {
+        if (tn.getType() == NodeType.VT_MODULE || tn.getType() == NodeType.VT_FUNCTION) {
             for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
                 ps.println(String.format("%17s: %s", edge.getName(), netLabel((NetNode) graph.getEdgeTarget(edge))));
             }

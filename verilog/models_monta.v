@@ -51,3 +51,11 @@ module transistor_pullup(input signed [`W-1:0] v, output signed [`W-1:0] i);
   wire signed [`W:0] dv = {hi[`W-1],hi} - {v[`W-1],v};
   assign i = {{3{dv[`W]}},dv[`W:4]};
 endmodule
+
+module transistor_function(input eclk, input erst, input i, output reg o);
+   always @(posedge eclk)
+      if (erst)
+        o <= 0;
+      else
+        o <= ~i;
+endmodule

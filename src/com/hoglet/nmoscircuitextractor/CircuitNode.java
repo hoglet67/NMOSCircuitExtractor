@@ -3,7 +3,7 @@ package com.hoglet.nmoscircuitextractor;
 public abstract class CircuitNode implements Comparable<CircuitNode> {
 
     public enum NodeType {
-        VT_NET, VT_EFET_VSS, VT_EFET, VT_EFET_VCC, VT_EPULLUP, VT_DPULLUP, VT_MODULE, VT_PIN,
+        VT_NET, VT_EFET_VSS, VT_EFET, VT_EFET_VCC, VT_EPULLUP, VT_DPULLUP, VT_MODULE, VT_FUNCTION, VT_PIN,
     }
 
     private NodeType type;

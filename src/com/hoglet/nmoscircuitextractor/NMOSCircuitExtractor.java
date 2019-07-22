@@ -13,7 +13,7 @@ public class NMOSCircuitExtractor {
 
             boolean validate = true;
 
-            boolean verilog = false;
+            boolean verilog = true;
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
 
@@ -121,7 +121,13 @@ public class NMOSCircuitExtractor {
             }
             reducer.dumpGraph(new File("netlist3.txt"));
 
-            reducer.markDigitalNodes();
+            reducer.replaceDigitalNodes();
+            reducer.markDigitalNets();
+            reducer.dumpStats();
+            if (validate) {
+                reducer.validateGraph();
+            }
+            reducer.dumpGraph(new File("netlist4.txt"));
 
             // Generate verilog output
             if (verilog) {
