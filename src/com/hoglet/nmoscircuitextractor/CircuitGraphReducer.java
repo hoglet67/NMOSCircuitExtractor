@@ -526,30 +526,61 @@ public class CircuitGraphReducer {
 
     public void markDigitalNodes() {
         System.out.println("Marking digital nodes");
-        int num_digital = 0;
-        int num_analog = 0;
+        Set<NetNode> digitalMod = new TreeSet<NetNode>();
+        Set<NetNode> digitalTr = new TreeSet<NetNode>();
+        Set<NetNode> analog = new TreeSet<NetNode>();
         for (CircuitNode cn : graph.vertexSet()) {
-            if (cn.getType() == NodeType.VT_DPULLUP) {
+            if (cn.getType() == NodeType.VT_NET) {
                 boolean isDigital = false;
-                NetNode net = getConnections(cn, EdgeType.PULLUP).iterator().next();
-                for (CircuitNode node : getNeighbours(net)) {
-                    if (node.getType() == NodeType.VT_EFET_VSS) {
-                        Set<CircuitNode> visited = new HashSet<CircuitNode>();
-                        visited.add(cn); // Add the pullup
-                        visited.add(node); // Add the driving transistor
+                NetNode net = (NetNode) cn;
+                Set<CircuitNode> visited = new HashSet<CircuitNode>();
+                boolean found_pullup = false;
+                boolean found_efet_vss = false;
+                for (CircuitEdge edge : graph.incomingEdgesOf(net)) {
+                    CircuitNode node = graph.getEdgeSource(edge);
+                    if (node.getType() == NodeType.VT_MODULE && edge.getType() == EdgeType.OUTPUT) {
+                        visited.add(node);
                         isDigital = isDigitalNode(visited, net);
+                        if (isDigital) {
+                            digitalMod.add(net);
+                        }
+                        break;
+                    } else if (!found_pullup && node.getType() == NodeType.VT_DPULLUP) {
+                        visited.add(node);
+                        found_pullup = true;
+                    } else if (!found_efet_vss && node.getType() == NodeType.VT_EFET_VSS && edge.getType() == EdgeType.CHANNEL) {
+                        visited.add(node);
+                        found_efet_vss = true;
+                    }
+                    if (found_pullup && found_efet_vss) {
+                        isDigital = isDigitalNode(visited, net);
+                        if (isDigital) {
+                            digitalTr.add(net);
+                        }
                         break;
                     }
                 }
-                if (isDigital) {
-                    num_digital++;
-                } else {
-                    num_analog++;
+                if (!isDigital) {
+                    analog.add(net);
                 }
             }
         }
-        System.out.println(" num_digital = " + num_digital);
-        System.out.println(" num_analog  = " + num_analog);
+        System.out.println("Nets driven by digital module outputs:");
+        for (NetNode net : digitalMod) {
+            System.out.println("    " + net);
+        }
+        System.out.println("Nets driven by digital transistor outputs:");
+        for (NetNode net : digitalTr) {
+            System.out.println("    " + net);
+        }
+        System.out.println("Nets driven that are analog:");
+        for (NetNode net : analog) {
+            System.out.println("    " + net);
+        }
+        System.out.println("Summary:");
+        System.out.println(" num_digital_mod = " + digitalMod.size());
+        System.out.println(" num_digital_tr  = " + digitalTr.size());
+        System.out.println(" num_analog      = " + analog.size());
         System.out.println("Marking digital nodes done");
 
     }

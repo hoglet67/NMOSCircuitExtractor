@@ -490,11 +490,17 @@ public class ModuleGen {
         return new Module("pass8", builder.getGraph(), ports);
     }
 
-    public List<Module> getSuperModules() {
+    public List<Module> getBasicModules() {
         List<Module> list = new LinkedList<Module>();
+        // Complex modules
         list.add(z80ABPinDriverModule());
         list.add(z80DBLatchModule());
         list.add(z80IRLatchModule());
+        // Storage modules
+        list.add(storage2GaModule());
+        list.add(storage2GbModule());
+        list.add(storage1GModule());
+        // Super buffers
         list.add(superNORModule());
         list.add(superNORAltModule());
         list.add(superNANDModule());
@@ -505,7 +511,7 @@ public class ModuleGen {
         return list;
     }
 
-    public List<Module> getModules() {
+    public List<Module> getAllModules() {
         List<Module> list = new LinkedList<Module>();
         // Complex modules
         list.add(z80ABPinDriverModule());

@@ -13,7 +13,7 @@ public class NMOSCircuitExtractor {
 
             boolean validate = true;
 
-            boolean verilog = true;
+            boolean verilog = false;
 
             Set<NetNode> ignoreWarnings = new HashSet<NetNode>();
 
@@ -96,7 +96,7 @@ public class NMOSCircuitExtractor {
                 reducer.markModules(mod, "100"); // Mark the left node
             } else {
                 // Remove some known modules
-                for (Module mod : moduleGen.getModules()) {
+                for (Module mod : moduleGen.getBasicModules()) {
                     reducer.replaceModule(mod);
                 }
             }
