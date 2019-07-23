@@ -242,14 +242,25 @@ public class CircuitGraphWriter {
     }
 
     public void writeModuleNode(PrintStream ps, ModuleNode node) {
-        ps.print("    " + node.getName() + " " + node.getId());
+        boolean analog = false;
+        for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
+            NetNode net = (NetNode) graph.getEdgeTarget(edge);
+            if (edge.getType() == EdgeType.OUTPUT && !net.isDigital()) {
+                analog = true;
+                break;
+            }
+        }
+        ps.print("    " + node.getName() + (analog ? "_analog" : "") + " " + node.getId());
         ps.print("(.eclk(eclk), .erst(erst)");
         for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
             NetNode net = (NetNode) graph.getEdgeTarget(edge);
             if (edge.getType() == EdgeType.OUTPUT && !net.isDigital()) {
                 System.out.println("OUTPUT of " + node + " driving analog net: " + net);
+                ps.print(", ." + edge.getName() + "_i(" + net + "_port" + edge.getPort() + ")");
+                ps.print(", ." + edge.getName() + "_v(" + net + "_val)");
+            } else {
+                ps.print(", ." + edge.getName() + "(" + net + ")");
             }
-            ps.print(", ." + edge.getName() + "(" + net + ")");
         }
         ps.println(");");
     }
