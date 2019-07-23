@@ -143,7 +143,7 @@ public class CircuitGraphWriter {
         boolean first = true;
         for (CircuitEdge edge : edges) {
             if (!first) {
-                ps.println(", ");
+                ps.print(", ");
             }
             NetNode net = (NetNode) graph.getEdgeTarget(edge);
             if (!net.isDigital()) {
@@ -241,6 +241,19 @@ public class CircuitGraphWriter {
         ps.println(");");
     }
 
+    public void writeModuleNode(PrintStream ps, ModuleNode node) {
+        ps.print("    " + node.getName() + " " + node.getId());
+        ps.print("(.eclk(eclk), .erst(erst)");
+        for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
+            NetNode net = (NetNode) graph.getEdgeTarget(edge);
+            if (edge.getType() == EdgeType.OUTPUT && !net.isDigital()) {
+                System.out.println("OUTPUT of " + node + " driving analog net: " + net);
+            }
+            ps.print(", ." + edge.getName() + "(" + net + ")");
+        }
+        ps.println(");");
+    }
+
     public void writeDeviceNodes(PrintStream ps) {
         for (CircuitNode node : graph.vertexSet()) {
             switch (node.getType()) {
@@ -262,6 +275,10 @@ public class CircuitGraphWriter {
             case VT_FUNCTION:
                 writeFunctionNode(ps, (FunctionNode) node);
                 break;
+            case VT_MODULE:
+                writeModuleNode(ps, (ModuleNode) node);
+                break;
+
             default:
                 throw new RuntimeException("Not implemented yet: " + node.getType());
             }

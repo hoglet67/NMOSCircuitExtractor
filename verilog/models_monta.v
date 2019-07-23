@@ -67,3 +67,37 @@ module transistor_function_init1(input eclk, input erst, input i, output reg o);
       else
         o <= ~i;
 endmodule
+
+module pushPull(input eclk, input erst, input IH, input IL, output O);
+   assign O = (IH & ~IL);
+endmodule
+
+module superBuffer(input eclk, input erst, input I, output O);
+   assign O = I;
+endmodule
+
+module superInverter(input eclk, input erst, input I, output O);
+   assign O = ~I;
+endmodule
+
+module superComplementary(input eclk, input erst, input I, output O1, output O2);
+   assign O1 = ~I;
+   assign O2 = I;
+endmodule
+
+module superNAND(input eclk, input erst, input I1, input I2, output O);
+   assign O = ~(I1 & I2);
+endmodule
+
+module superNOR(input eclk, input erst, input I1, input I2, output O);
+   assign O = ~(I1 | I2);
+//   always @(posedge eclk)
+//     if (erst)
+//       O <= 1'b0;
+//     else
+//       O <= ~(I1 | I2);
+endmodule
+
+module superNORAlt(input eclk, input erst, input I1, input I2, output O);
+   assign O = ~(I1 | I2);
+endmodule

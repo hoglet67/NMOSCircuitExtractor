@@ -384,6 +384,19 @@ public class CircuitGraphReducer {
                 continue;
             }
 
+//            boolean skip = false;
+//            for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+//                CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+//                if (cn.getId().equals("t1") || cn.getId().equals("t3")) {
+//                    skip = true;
+//                    break;
+//                }
+//            }
+//            if (skip) {
+//                System.out.println("Skipping");
+//                continue;
+//            }
+
             // Record the components (transistors, internal nets) for later
             // deletion (outside the iterator) in toDelete
             for (CircuitNode subcn : mod.getGraph().vertexSet()) {
@@ -400,7 +413,7 @@ public class CircuitGraphReducer {
             }
             num++;
             numMap.put(mod.getName(), num);
-            ModuleNode modNode = new ModuleNode(mod.getName() + num);
+            ModuleNode modNode = new ModuleNode(mod.getName(), mod.getName() + num);
             List<ModulePort> ports = new LinkedList<ModulePort>();
             for (ModulePort subp : mod.getPorts()) {
                 CircuitNode netNode = mapping.getVertexCorrespondence(subp.getNet(), false);

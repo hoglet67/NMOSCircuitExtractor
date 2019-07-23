@@ -492,22 +492,14 @@ public class ModuleGen {
 
     public List<Module> getBasicModules() {
         List<Module> list = new LinkedList<Module>();
-        // Complex modules
-        list.add(z80ABPinDriverModule());
-        list.add(z80DBLatchModule());
-        list.add(z80IRLatchModule());
-        // Storage modules
-        list.add(storage2GaModule());
-        list.add(storage2GbModule());
-        list.add(storage1GModule());
         // Super buffers
         list.add(superNORModule());
-        list.add(superNORAltModule());
-        list.add(superNANDModule());
-        list.add(superComplementaryModule());
-        list.add(superInvertorModule());
-        list.add(superBufferModule());
-        list.add(pushPullModule());
+        //list.add(superNORAltModule());
+        //list.add(superNANDModule());
+        //list.add(superComplementaryModule());
+        //list.add(superInvertorModule());
+        //list.add(superBufferModule());
+        //list.add(pushPullModule());
         return list;
     }
 
