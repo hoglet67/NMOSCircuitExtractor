@@ -771,7 +771,7 @@ public class CircuitGraphReducer {
 
     private void dumpNode(PrintStream ps, CircuitNode tn) {
         ps.println(tn);
-        if (tn.getType() == NodeType.VT_MODULE || tn.getType() == NodeType.VT_FUNCTION) {
+        if (tn.getType() == NodeType.VT_MODULE) {
             for (CircuitEdge edge : graph.outgoingEdgesOf(tn)) {
                 ps.println(String.format("%17s: %s", edge.getName(), netLabel((NetNode) graph.getEdgeTarget(edge))));
             }
@@ -784,8 +784,8 @@ public class CircuitGraphReducer {
             dumpConnections(ps, "           output", getConnections(tn, EdgeType.OUTPUT));
             dumpConnections(ps, "    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
         }
-        if (tn.getType() == NodeType.VT_EFET || tn.getType() == NodeType.VT_EFET_VSS) {
-            ps.println("               fn: NOT(" + ((TransistorNode) tn).getFunction() + ")");
+        if (tn  instanceof IFunction) {
+            ps.println("               fn: NOT(" + ((IFunction) tn).getFunction() + ")");
         }
     }
 

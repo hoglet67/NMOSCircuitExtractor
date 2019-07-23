@@ -1,6 +1,6 @@
 package com.hoglet.nmoscircuitextractor;
 
-public class FunctionNode extends CircuitNode {
+public class FunctionNode extends CircuitNode implements IFunction {
 
     private String function = null;
     private boolean init;
