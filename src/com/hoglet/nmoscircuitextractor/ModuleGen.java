@@ -497,8 +497,8 @@ public class ModuleGen {
         //list.add(superNORAltModule());
         //list.add(superNANDModule());
         //list.add(superComplementaryModule());
-        //list.add(superInvertorModule());
-        //list.add(superBufferModule());
+        list.add(superInvertorModule());
+        list.add(superBufferModule());
         //list.add(pushPullModule());
         return list;
     }
