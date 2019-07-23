@@ -494,9 +494,9 @@ public class ModuleGen {
         List<Module> list = new LinkedList<Module>();
         // Super buffers
         list.add(superNORModule());
-        //list.add(superNORAltModule());
-        //list.add(superNANDModule());
-        //list.add(superComplementaryModule());
+        list.add(superNORAltModule());
+        list.add(superNANDModule());
+        list.add(superComplementaryModule());
         list.add(superInvertorModule());
         list.add(superBufferModule());
         //list.add(pushPullModule());

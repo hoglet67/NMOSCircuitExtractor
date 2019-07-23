@@ -68,38 +68,63 @@ module transistor_function_init1(input eclk, input erst, input i, output reg o);
         o <= ~i;
 endmodule
 
-module pushPull(input eclk, input erst, input IH, input IL, output O);
-   assign O = (IH & ~IL);
+module pushPull(input eclk, input erst, input IH, input IL, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= (IH & ~IL);
 endmodule
 
-module superBuffer(input eclk, input erst, input I, output O);
-   assign O = I;
+module superBuffer(input eclk, input erst, input I, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= I;
 endmodule
 
-module superInverter(input eclk, input erst, input I, output O);
-   assign O = ~I;
+module superInverter(input eclk, input erst, input I, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= ~I;
 endmodule
 
-module superComplementary(input eclk, input erst, input I, output O1, output O2);
-   assign O1 = ~I;
-   assign O2 = I;
+module superComplementary(input eclk, input erst, input I, output reg O1, output reg O2);
+   always @(posedge eclk)
+     if (erst) begin
+        O1 <= 1'b1;
+        O2 <= 1'b0;
+     end else begin
+        O1 <= ~I;
+        O2 <= I;
+     end
 endmodule
 
-module superNAND(input eclk, input erst, input I1, input I2, output O);
-   assign O = ~(I1 & I2);
+module superNAND(input eclk, input erst, input I1, input I2, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= ~(I1 & I2);
 endmodule
 
-module superNOR(input eclk, input erst, input I1, input I2, output O);
-   assign O = ~(I1 | I2);
-//   always @(posedge eclk)
-//     if (erst)
-//       O <= 1'b0;
-//     else
-//       O <= ~(I1 | I2);
+module superNOR(input eclk, input erst, input I1, input I2, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= ~(I1 | I2);
 endmodule
 
-module superNORAlt(input eclk, input erst, input I1, input I2, output O);
-   assign O = ~(I1 | I2);
+module superNORAlt(input eclk, input erst, input I1, input I2, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= ~(I1 | I2);
 endmodule
 
 module dac(input p, input signed [`W-1:0] v, output signed [`W-1:0] i);
