@@ -80,18 +80,6 @@ module superInverter(input eclk, input erst, input I, output O);
    assign O = ~I;
 endmodule
 
-module superBuffer_analog(input eclk, input erst, input I, input signed [`W-1:0] O_v, output signed [`W-1:0] O_i);
-   wire O;
-   superBuffer u(eclk, erst, I, O);
-   pad_input p(O, O_v, O_i);
-endmodule
-
-module superInverter_analog(input eclk, input erst, input I, input signed [`W-1:0] O_v, output signed [`W-1:0] O_i);
-   wire O;
-   superInverter u(eclk, erst, I, O);
-   pad_input p(O, O_v, O_i);
-endmodule
-
 module superComplementary(input eclk, input erst, input I, output O1, output O2);
    assign O1 = ~I;
    assign O2 = I;
@@ -112,4 +100,10 @@ endmodule
 
 module superNORAlt(input eclk, input erst, input I1, input I2, output O);
    assign O = ~(I1 | I2);
+endmodule
+
+module dac(input p, input signed [`W-1:0] v, output signed [`W-1:0] i);
+  wire [`W-1:0] vp = p ? `HI : `LO;
+  wire [`W:0] dv = {vp[`W-1],vp} - {v[`W-1],v};
+  assign i = {{2{dv[`W]}},dv[`W:3]};
 endmodule

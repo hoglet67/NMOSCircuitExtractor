@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -189,12 +190,18 @@ public class CircuitGraphWriter {
                 }
                 ps.println("    wire " + WTYPE + " " + id + "_val;");
                 ps.println("    wire " + id + " = v(" + id + "_val);");
+                // Currently an analogue net can have at most one driver of type OUTPUT
+                for (CircuitEdge edge : edges) {
+                    if (edge.getType() == EdgeType.OUTPUT) {
+                        ps.println("    wire " + id + "_o;");
+                        break;
+                    }
+                }
             }
         }
         ps.println();
 
         // net_node_2 id_node (eclk, erst, id_port_0, id_port_1, ... id_val);
-
         for (NetNode net : nets) {
             if (net.isDigital()) {
                 continue;
@@ -242,27 +249,30 @@ public class CircuitGraphWriter {
     }
 
     public void writeModuleNode(PrintStream ps, ModuleNode node) {
-        boolean analog = false;
-        for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
-            NetNode net = (NetNode) graph.getEdgeTarget(edge);
-            if (edge.getType() == EdgeType.OUTPUT && !net.isDigital()) {
-                analog = true;
-                break;
-            }
-        }
-        ps.print("    " + node.getName() + (analog ? "_analog" : "") + " " + node.getId());
+        Map<NetNode, Integer> dacs = new HashMap<NetNode, Integer>();
+        ps.print("    " + node.getName() + " " + node.getId());
         ps.print("(.eclk(eclk), .erst(erst)");
         for (CircuitEdge edge : graph.outgoingEdgesOf(node)) {
             NetNode net = (NetNode) graph.getEdgeTarget(edge);
             if (edge.getType() == EdgeType.OUTPUT && !net.isDigital()) {
-                System.out.println("OUTPUT of " + node + " driving analog net: " + net);
-                ps.print(", ." + edge.getName() + "_i(" + net + "_port" + edge.getPort() + ")");
-                ps.print(", ." + edge.getName() + "_v(" + net + "_val)");
+                ps.print(", ." + edge.getName() + "(" + net + "_o)");
+                dacs.put(net, edge.getPort());
             } else {
                 ps.print(", ." + edge.getName() + "(" + net + ")");
             }
         }
         ps.println(");");
+        // Add a DAC for the case where a digital module output drives an
+        // analogue net
+        for (Map.Entry<NetNode, Integer> dac : dacs.entrySet()) {
+            NetNode net = dac.getKey();
+            Integer port = dac.getValue();
+            ps.print("    dac dac_" + net + "(");
+            ps.print(net + "_o, ");
+            ps.print(net + "_val, ");
+            ps.print(net + "_port" + port);
+            ps.println(");");
+        }
     }
 
     public void writeDeviceNodes(PrintStream ps) {
