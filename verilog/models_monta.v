@@ -127,6 +127,31 @@ module superNORAlt(input eclk, input erst, input I1, input I2, output reg O);
        O <= ~(I1 | I2);
 endmodule
 
+module storage1G(input eclk, input erst, input D, input G, output reg Q);
+   always @(posedge eclk)
+     if (erst)
+       Q <= 1'b0;
+     else if (G)
+       Q <= D;
+endmodule
+
+// Same as 1G
+module storage2Ga(input eclk, input erst, input D, input G, output reg Q);
+   always @(posedge eclk)
+     if (erst)
+       Q <= 1'b0;
+     else if (G)
+       Q <= D;
+endmodule
+
+module storage2Gb(input eclk, input erst, input D, input G1, input G2, output reg Q);
+   always @(posedge eclk)
+     if (erst)
+       Q <= 1'b0;
+     else if (G1 & G2)
+       Q <= D;
+endmodule
+
 module dac(input p, input signed [`W-1:0] v, output signed [`W-1:0] i);
   wire [`W-1:0] vp = p ? `HI : `LO;
   wire [`W:0] dv = {vp[`W-1],vp} - {v[`W-1],v};
