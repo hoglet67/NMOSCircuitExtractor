@@ -107,7 +107,7 @@ module regfileSlice
    input      pc_wr,
    input      r_p,
    input      r_x1, // not used
-   input      clk,  // not used
+   input      clk, // not used
    input      reg_din,
    input      reg_wr,
    input      regselpc,
@@ -144,47 +144,16 @@ module regfileSlice
            ldata = 1'b0;
          if (reg_wr & !reg_din)
            ldata = 1'b0;
-         if (!pc_wr & !reg_wr) begin
-           if (sel[0] & !regs[0])
+         if (!pc_wr & !reg_wr)
+           if (|(sel[13:0] & ~regs[13:0]))
              ldata = 1'b0;
-           if (sel[1] & !regs[1])
-             ldata = 1'b0;
-           if (sel[2] & !regs[2])
-             ldata = 1'b0;
-           if (sel[3] & !regs[3])
-             ldata = 1'b0;
-           if (sel[4] & !regs[4])
-             ldata = 1'b0;
-           if (sel[5] & !regs[5])
-             ldata = 1'b0;
-           if (sel[6] & !regs[6])
-             ldata = 1'b0;
-           if (sel[7] & !regs[7])
-             ldata = 1'b0;
-           if (sel[8] & !regs[8])
-             ldata = 1'b0;
-           if (sel[9] & !regs[9])
-             ldata = 1'b0;
-           if (sel[10] & !regs[10])
-             ldata = 1'b0;
-           if (sel[11] & !regs[11])
-             ldata = 1'b0;
-           if (sel[12] & !regs[12])
-             ldata = 1'b0;
-           if (sel[13] & !regs[13])
-             ldata = 1'b0;
-         end
-
       end else begin
          // Left and Right busses are split
          if (pc_wr & !pc_din)
            ldata = 1'b0;
-         if (!pc_wr) begin
-           if (sel[0] & !regs[0])
+         if (!pc_wr)
+           if (|(sel[1:0] & ~regs[1:0]))
              ldata = 1'b0;
-           if (sel[1] & !regs[1])
-             ldata = 1'b0;
-         end
       end
    end
 
@@ -198,66 +167,16 @@ module regfileSlice
            rdata = 1'b0;
          if (reg_wr & !reg_din)
            rdata = 1'b0;
-         if (!pc_wr & !reg_wr) begin
-           if (sel[0] & !regs[0])
+         if (!pc_wr & !reg_wr)
+           if (|(sel[13:0] & ~regs[13:0]))
              rdata = 1'b0;
-           if (sel[1] & !regs[1])
-             rdata = 1'b0;
-           if (sel[2] & !regs[2])
-             rdata = 1'b0;
-           if (sel[3] & !regs[3])
-             rdata = 1'b0;
-           if (sel[4] & !regs[4])
-             rdata = 1'b0;
-           if (sel[5] & !regs[5])
-             rdata = 1'b0;
-           if (sel[6] & !regs[6])
-             rdata = 1'b0;
-           if (sel[7] & !regs[7])
-             rdata = 1'b0;
-           if (sel[8] & !regs[8])
-             rdata = 1'b0;
-           if (sel[9] & !regs[9])
-             rdata = 1'b0;
-           if (sel[10] & !regs[10])
-             rdata = 1'b0;
-           if (sel[11] & !regs[11])
-             rdata = 1'b0;
-           if (sel[12] & !regs[12])
-             rdata = 1'b0;
-           if (sel[13] & !regs[13])
-             rdata = 1'b0;
-         end
       end else begin
          // Left and Right busses are split
          if (reg_wr & !reg_din)
            rdata = 1'b0;
-         if (!reg_wr) begin
-           if (sel[2] & !regs[2])
+         if (!reg_wr)
+           if (|(sel[13:2] & ~regs[13:2]))
              rdata = 1'b0;
-           if (sel[3] & !regs[3])
-             rdata = 1'b0;
-           if (sel[4] & !regs[4])
-             rdata = 1'b0;
-           if (sel[5] & !regs[5])
-             rdata = 1'b0;
-           if (sel[6] & !regs[6])
-             rdata = 1'b0;
-           if (sel[7] & !regs[7])
-             rdata = 1'b0;
-           if (sel[8] & !regs[8])
-             rdata = 1'b0;
-           if (sel[9] & !regs[9])
-             rdata = 1'b0;
-           if (sel[10] & !regs[10])
-             rdata = 1'b0;
-           if (sel[11] & !regs[11])
-             rdata = 1'b0;
-           if (sel[12] & !regs[12])
-             rdata = 1'b0;
-           if (sel[13] & !regs[13])
-             rdata = 1'b0;
-         end
       end
    end
 
@@ -305,5 +224,4 @@ module regfileSlice
 
      end
 
-
-  endmodule // storage2Gb
+endmodule
