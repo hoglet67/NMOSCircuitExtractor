@@ -134,75 +134,175 @@ module regfileSlice
 
    wire [13:0] sel = { regselaf0, regselaf1, regselbc0, regselbc1, regselde0, regselde1, regselhl0, regselhl1, regselix, regseliy, regselsp, regselwz, regselir, regselpc};
 
-   integer     i1, i2, i3;
-
    // Work out the value on the left data bus
 
    always @(*) begin
-      ldata = 1;
+      ldata = 1'b1;
       if (r_p) begin
          // Left and Right busses are joined
          if (pc_wr & !pc_din)
-           ldata = 0;
+           ldata = 1'b0;
          if (reg_wr & !reg_din)
-           ldata = 0;
-         if (!pc_wr & !reg_wr)
-           for (i1 = 0; i1 < 14; i1 = i1 + 1)
-             if (sel[i1] & !regs[i1])
-               ldata = 0;
+           ldata = 1'b0;
+         if (!pc_wr & !reg_wr) begin
+           if (sel[0] & !regs[0])
+             ldata = 1'b0;
+           if (sel[1] & !regs[1])
+             ldata = 1'b0;
+           if (sel[2] & !regs[2])
+             ldata = 1'b0;
+           if (sel[3] & !regs[3])
+             ldata = 1'b0;
+           if (sel[4] & !regs[4])
+             ldata = 1'b0;
+           if (sel[5] & !regs[5])
+             ldata = 1'b0;
+           if (sel[6] & !regs[6])
+             ldata = 1'b0;
+           if (sel[7] & !regs[7])
+             ldata = 1'b0;
+           if (sel[8] & !regs[8])
+             ldata = 1'b0;
+           if (sel[9] & !regs[9])
+             ldata = 1'b0;
+           if (sel[10] & !regs[10])
+             ldata = 1'b0;
+           if (sel[11] & !regs[11])
+             ldata = 1'b0;
+           if (sel[12] & !regs[12])
+             ldata = 1'b0;
+           if (sel[13] & !regs[13])
+             ldata = 1'b0;
+         end
+
       end else begin
          // Left and Right busses are split
          if (pc_wr & !pc_din)
-           ldata = 0;
-         if (!pc_wr)
-           for (i1 = 0; i1 < 2; i1 = i1 + 1)
-             if (sel[i1] & !regs[i1])
-               ldata = 0;
+           ldata = 1'b0;
+         if (!pc_wr) begin
+           if (sel[0] & !regs[0])
+             ldata = 1'b0;
+           if (sel[1] & !regs[1])
+             ldata = 1'b0;
+         end
       end
    end
 
    // Work out the value on the right data bus
 
    always @(*) begin
-      rdata = 1;
+      rdata = 1'b1;
       if (r_p) begin
          // Left and Right busses are joined
          if (pc_wr & !pc_din)
-           rdata = 0;
+           rdata = 1'b0;
          if (reg_wr & !reg_din)
-           rdata = 0;
-         if (!pc_wr & !reg_wr)
-           for (i2 = 0; i2 < 14; i2 = i2 + 1)
-             if (sel[i2] & !regs[i2])
-               rdata = 0;
+           rdata = 1'b0;
+         if (!pc_wr & !reg_wr) begin
+           if (sel[0] & !regs[0])
+             rdata = 1'b0;
+           if (sel[1] & !regs[1])
+             rdata = 1'b0;
+           if (sel[2] & !regs[2])
+             rdata = 1'b0;
+           if (sel[3] & !regs[3])
+             rdata = 1'b0;
+           if (sel[4] & !regs[4])
+             rdata = 1'b0;
+           if (sel[5] & !regs[5])
+             rdata = 1'b0;
+           if (sel[6] & !regs[6])
+             rdata = 1'b0;
+           if (sel[7] & !regs[7])
+             rdata = 1'b0;
+           if (sel[8] & !regs[8])
+             rdata = 1'b0;
+           if (sel[9] & !regs[9])
+             rdata = 1'b0;
+           if (sel[10] & !regs[10])
+             rdata = 1'b0;
+           if (sel[11] & !regs[11])
+             rdata = 1'b0;
+           if (sel[12] & !regs[12])
+             rdata = 1'b0;
+           if (sel[13] & !regs[13])
+             rdata = 1'b0;
+         end
       end else begin
          // Left and Right busses are split
          if (reg_wr & !reg_din)
-           rdata = 0;
-         if (!reg_wr)
-           for (i2 = 2; i2 < 14; i2 = i2 + 1)
-             if (sel[i2] & !regs[i2])
-               rdata = 0;
+           rdata = 1'b0;
+         if (!reg_wr) begin
+           if (sel[2] & !regs[2])
+             rdata = 1'b0;
+           if (sel[3] & !regs[3])
+             rdata = 1'b0;
+           if (sel[4] & !regs[4])
+             rdata = 1'b0;
+           if (sel[5] & !regs[5])
+             rdata = 1'b0;
+           if (sel[6] & !regs[6])
+             rdata = 1'b0;
+           if (sel[7] & !regs[7])
+             rdata = 1'b0;
+           if (sel[8] & !regs[8])
+             rdata = 1'b0;
+           if (sel[9] & !regs[9])
+             rdata = 1'b0;
+           if (sel[10] & !regs[10])
+             rdata = 1'b0;
+           if (sel[11] & !regs[11])
+             rdata = 1'b0;
+           if (sel[12] & !regs[12])
+             rdata = 1'b0;
+           if (sel[13] & !regs[13])
+             rdata = 1'b0;
+         end
       end
    end
 
 
    always @(posedge eclk)
      if (erst) begin
-        pc_dout <= 1;
-        reg_dout <= 0;
-        regs <= 0;
+        pc_dout <= 1'b1;
+        reg_dout <= 1'b0;
+        regs <= 14'b0;
      end else begin
         pc_dout <= ~ldata;
         reg_dout <= rdata;
-        if (pc_wr | (r_p & reg_wr))
-          for (i3 = 0; i3 < 2; i3 = i3 + 1)
-            if (sel[i3])
-              regs[i3] <= ldata;
-        if (reg_wr | (r_p & pc_wr))
-          for (i3 = 2; i3 < 14; i3 = i3 + 1)
-            if (sel[i3])
-              regs[i3] <= rdata;
+        if (pc_wr | (r_p & reg_wr)) begin
+           if (sel[0])
+             regs[0] <= ldata;
+           if (sel[1])
+             regs[1] <= ldata;
+        end
+        if (reg_wr | (r_p & pc_wr)) begin
+           if (sel[2])
+             regs[2] <= rdata;
+           if (sel[3])
+             regs[3] <= rdata;
+           if (sel[4])
+             regs[4] <= rdata;
+           if (sel[5])
+             regs[5] <= rdata;
+           if (sel[6])
+             regs[6] <= rdata;
+           if (sel[7])
+             regs[7] <= rdata;
+           if (sel[8])
+             regs[8] <= rdata;
+           if (sel[9])
+             regs[9] <= rdata;
+           if (sel[10])
+             regs[10] <= rdata;
+           if (sel[11])
+             regs[11] <= rdata;
+           if (sel[12])
+             regs[12] <= rdata;
+           if (sel[13])
+             regs[13] <= rdata;
+        end
+
      end
 
 
