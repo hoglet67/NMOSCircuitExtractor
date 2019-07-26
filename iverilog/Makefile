@@ -2,6 +2,7 @@ VSRC = ../verilog/test_z80.v\
        ../verilog/chip_z80.v\
        ../verilog/clocks_6502.v\
        ../verilog/ram_6502.v\
+       ../verilog/library.v\
        ../verilog/models_monta.v
 
 VFLAGS = -Wall

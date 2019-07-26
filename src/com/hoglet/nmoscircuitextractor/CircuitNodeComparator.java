@@ -19,7 +19,11 @@ public class CircuitNodeComparator implements Comparator<CircuitNode> {
         if (arg0 instanceof NetNode && arg1 instanceof NetNode) {
             NetNode net0 = (NetNode) arg0;
             NetNode net1 = (NetNode) arg1;
-            if (net0.isExternal() || net1.isExternal()) {
+            if (net0.isGlobal() || net1.isGlobal()) {
+                // Case 1: the net is global, so match on name
+                return net0.getId().compareTo(net1.getId());
+            } else if (net0.isExternal() || net1.isExternal()) {
+                // Case 2: the net is external, so match on constraints
                 int channnelConstraint = -1;
                 NetNode net = null;
                 if (net0.hasChannelConstraint()) {
@@ -45,6 +49,7 @@ public class CircuitNodeComparator implements Comparator<CircuitNode> {
                     }
                 }
             } else {
+                // Case 4: the net is internal, so match on degree
                 return net1.getDegree() - net0.getDegree();
             }
         } else {

@@ -35,7 +35,9 @@ public class CircuitGraphReducer {
         this.graph = graph;
         this.net_vss = net_vss;
         this.net_vcc = net_vcc;
-        this.ignoreWarnings.addAll(ignoreWarnings);
+        if (ignoreWarnings != null) {
+            this.ignoreWarnings.addAll(ignoreWarnings);
+        }
         buildPullupSet();
         buildNodeTypes();
     }
@@ -384,18 +386,18 @@ public class CircuitGraphReducer {
                 continue;
             }
 
-//            boolean skip = false;
-//            for (CircuitNode subcn : mod.getGraph().vertexSet()) {
-//                CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
-//                if (cn.getId().equals("t1") || cn.getId().equals("t3")) {
-//                    skip = true;
-//                    break;
-//                }
-//            }
-//            if (skip) {
-//                System.out.println("Skipping");
-//                continue;
-//            }
+            // boolean skip = false;
+            // for (CircuitNode subcn : mod.getGraph().vertexSet()) {
+            // CircuitNode cn = mapping.getVertexCorrespondence(subcn, false);
+            // if (cn.getId().equals("t1") || cn.getId().equals("t3")) {
+            // skip = true;
+            // break;
+            // }
+            // }
+            // if (skip) {
+            // System.out.println("Skipping");
+            // continue;
+            // }
 
             // Record the components (transistors, internal nets) for later
             // deletion (outside the iterator) in toDelete
@@ -784,7 +786,7 @@ public class CircuitGraphReducer {
             dumpConnections(ps, "           output", getConnections(tn, EdgeType.OUTPUT));
             dumpConnections(ps, "    bidirectional", getConnections(tn, EdgeType.BIDIRECTIONAL));
         }
-        if (tn  instanceof IFunction) {
+        if (tn instanceof IFunction) {
             ps.println("               fn: NOT(" + ((IFunction) tn).getFunction() + ")");
         }
     }

@@ -1,5 +1,6 @@
 package com.hoglet.nmoscircuitextractor;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,9 +11,90 @@ public class ModuleGen {
     private String net_vss;
     private String net_vcc;
 
+    private int nextNet = 100;
+
     public ModuleGen(String net_vss, String net_vcc) {
         this.net_vss = net_vss;
         this.net_vcc = net_vcc;
+    }
+
+    private String nextNet() {
+        return "" + (nextNet++);
+    }
+
+    private void addRegister(CircuitGraphBuilder builder, String name, String busP, String busN, String sel) {
+        String net0 = nextNet();
+        String net1 = nextNet();
+        builder.addTransistor(name + "0", net1, net0, net_vss);
+        builder.addTransistor(name + "1", net0, net1, net_vss);
+        builder.addTransistor(name + "2", sel, net0, busP);
+        builder.addTransistor(name + "3", sel, net1, busN);
+        builder.addDPullup(name + "1", net0);
+        builder.addDPullup(name + "2", net1);
+    }
+
+    private void addSuperComplementary(CircuitGraphBuilder builder, String name, String in, String OP, String ON) {
+        String net0 = nextNet();
+        builder.addDPullup(net0 + "_pullup", net0);
+        builder.addTransistor(name + "0", in, net0, net_vss);
+        builder.addTransistor(name + "1", in, ON, net_vss);
+        builder.addTransistor(name + "2", net0, ON, net_vcc);
+        builder.addTransistor(name + "3", net0, OP, net_vss);
+        builder.addTransistor(name + "4", in, OP, net_vcc);
+    }
+
+    private Module regfileSliceModule() {
+        String[] names = new String[] { "pc", "ir", "wz", "sp", "iy", "ix", "hl1", "hl0", "de1", "de0", "bc1", "bc0", "af1",
+                "af0" };
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
+
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("pc_din")));
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("pc_wr")));
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("r_p")));
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("r_x1")));
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("clk")));
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("reg_wr")));
+        ports.add(new ModulePort(EdgeType.INPUT, builder.addExternal("reg_din")));
+        ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal("reg_dout")));
+        ports.add(new ModulePort(EdgeType.OUTPUT, builder.addExternal("pc_dout")));
+
+        for (int i = 0; i < names.length; i++) {
+            String reg = "reg_" + names[i];
+            String sel = "regsel" + names[i];
+            ports.add(new ModulePort(EdgeType.INPUT, builder.addGlobal(sel)));
+            String busP = i < 2 ? "pcbit" : "regbit";
+            String busN = i < 2 ? "_pcbit" : "_regbit";
+            addRegister(builder, reg, busP, busN, sel);
+        }
+
+        builder.addTransistor("pcout", "pcbit", "pc_dout", net_vss);
+        builder.addDPullup("pullpcout", "pc_dout");
+
+        addSuperComplementary(builder, "sc1", "pc_din", "pcP", "pcN");
+        builder.addTransistor("pass1", "pc_wr", "pcP", "pcbit");
+        builder.addTransistor("pass2", "pc_wr", "pcN", "_pcbit");
+        builder.addTransistor("pass3", "r_p", "pcbit", "regbit");
+        builder.addTransistor("pass4", "r_p", "_pcbit", "_regbit");
+        builder.addTransistor("pass5", "reg_wr", "regbit", "regP");
+        builder.addTransistor("pass6", "reg_wr", "_regbit", "regN");
+
+        builder.addTransistor("pull1a", "clk", "regbit", "p1");
+        builder.addTransistor("pull1b", "r_x1", "p1", net_vcc);
+        builder.addTransistor("pull2a", "clk", "_regbit", "p2");
+        builder.addTransistor("pull2b", "r_x1", "p2", net_vcc);
+
+        builder.addEPullup("pull3", "pcbit");
+        builder.addEPullup("pull4", "_pcbit");
+
+        builder.addTransistor("uinv", "reg_din", "_reg_din", net_vss);
+        builder.addDPullup("pull5", "_reg_din");
+        addSuperComplementary(builder, "sc2", "_reg_din", "regP", "regN");
+
+        builder.addTransistor("regout", "_regbit", "reg_dout", net_vss);
+        builder.addDPullup("pullregout", "reg_dout");
+
+        return new Module("regfileSlice", builder.getGraph(), ports);
     }
 
     // Build a small subgraph that looks like the register cell
@@ -26,8 +108,8 @@ public class ModuleGen {
         builder.addTransistor("201", 110, 111, net_vss);
         builder.addTransistor("202", 102, 110, 100);
         builder.addTransistor("203", 102, 111, 101);
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
         return new Module("register", builder.getGraph(), ports);
     }
 
@@ -37,7 +119,7 @@ public class ModuleGen {
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("O1", EdgeType.OUTPUT, builder.addExternal(101))); // output
         ports.add(new ModulePort("O2", EdgeType.OUTPUT, builder.addExternal(102))); // output
-        builder.addPullup("1", 110);
+        builder.addDPullup("1", 110);
         builder.addTransistor("200", 100, 110, net_vss);
         builder.addTransistor("201", 100, 101, net_vss);
         builder.addTransistor("202", 110, 101, net_vcc);
@@ -51,7 +133,7 @@ public class ModuleGen {
         CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(101))); // output
-        builder.addPullup("1", 110);
+        builder.addDPullup("1", 110);
         builder.addTransistor("200", 100, 110, net_vss);
         builder.addTransistor("201", 100, 101, net_vss);
         builder.addTransistor("202", 110, 101, net_vcc);
@@ -63,7 +145,7 @@ public class ModuleGen {
         CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
         ports.add(new ModulePort("I", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(101))); // output
-        builder.addPullup("1", 110);
+        builder.addDPullup("1", 110);
         builder.addTransistor("200", 100, 110, net_vss);
         builder.addTransistor("201", 110, 101, net_vss);
         builder.addTransistor("202", 100, 101, net_vcc);
@@ -76,7 +158,7 @@ public class ModuleGen {
         ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
-        builder.addPullup("1", 110);
+        builder.addDPullup("1", 110);
         builder.addTransistor("200", 100, 110, net_vss);
         builder.addTransistor("201", 101, 110, net_vss);
         builder.addTransistor("202", 100, 102, net_vss);
@@ -91,8 +173,8 @@ public class ModuleGen {
         ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
         builder.addTransistor("200", 100, 110, net_vss);
         builder.addTransistor("201", 101, 110, net_vss);
         builder.addTransistor("202", 110, 111, net_vss);
@@ -108,7 +190,7 @@ public class ModuleGen {
         ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
         ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
         ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
-        builder.addPullup("1", 110);
+        builder.addDPullup("1", 110);
         builder.addTransistor("200", 100, 110, 111);
         builder.addTransistor("201", 101, 111, net_vss);
         builder.addTransistor("202", 100, 102, 112);
@@ -125,7 +207,7 @@ public class ModuleGen {
         ports.add(new ModulePort("G", EdgeType.INPUT, builder.addExternal(102))); // clock
         builder.addTransistor("200", 102, 101, 110);
         builder.addTransistor("201", 110, 100, net_vss);
-        builder.addPullup("1", 100);
+        builder.addDPullup("1", 100);
         return new Module("storage", builder.getGraph(), ports);
     }
 
@@ -193,10 +275,10 @@ public class ModuleGen {
         builder.addTransistor("202", 110, 111, 112);
         builder.addTransistor("203", 111, 110, 112);
         builder.addTransistor("204", 112, 102, net_vss);
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
-        builder.addPullup("3", 112);
-        builder.addPullup("4", 102);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
+        builder.addDPullup("3", 112);
+        builder.addDPullup("4", 102);
         return new Module("xor2", builder.getGraph(), ports);
     }
 
@@ -210,9 +292,9 @@ public class ModuleGen {
         builder.addTransistor("201", 101, 111, net_vss);
         builder.addTransistor("202", 110, 111, 102);
         builder.addTransistor("203", 111, 110, 102);
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
-        builder.addPullup("3", 102);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
+        builder.addDPullup("3", 102);
         return new Module("xnor2", builder.getGraph(), ports);
     }
 
@@ -231,14 +313,14 @@ public class ModuleGen {
         builder.addTransistor("32", 111, 113, net_vcc);
         builder.addTransistor("33", 104, 102, 100);
         builder.addTransistor("34", 100, 112, net_vss);
-        builder.addPullup("35", 112);
+        builder.addDPullup("35", 112);
         builder.addTransistor("36", 112, 111, net_vss);
-        builder.addPullup("37", 111);
+        builder.addDPullup("37", 111);
         builder.addTransistor("38", 103, 101, 100);
         builder.addTransistor("39", 110, 111, 100);
         builder.addTransistor("40", 103, 110, net_vss);
         builder.addTransistor("41", 104, 110, net_vss);
-        builder.addPullup("42", 110);
+        builder.addDPullup("42", 110);
         return new Module("DBLatch", builder.getGraph(), ports);
     }
 
@@ -254,8 +336,8 @@ public class ModuleGen {
         builder.addTransistor("200", 112, 110, net_vss);
         builder.addTransistor("201", 110, 111, net_vss);
         builder.addTransistor("202", 103, 111, 112);
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
         builder.addTransistor("204", 110, 100, net_vcc);
         builder.addTransistor("205", 111, 100, net_vss);
         builder.addTransistor("206", 111, 101, net_vcc);
@@ -278,8 +360,8 @@ public class ModuleGen {
         builder.addTransistor("200", 102, 100, net_vss);
         builder.addTransistor("201", 100, 101, net_vss);
         builder.addTransistor("202", 103, 101, 102);
-        builder.addPullup("1", 100);
-        builder.addPullup("2", 101);
+        builder.addDPullup("1", 100);
+        builder.addDPullup("2", 101);
         return new Module("latch", builder.getGraph(), ports);
     }
 
@@ -299,8 +381,8 @@ public class ModuleGen {
         builder.addTransistor("201", 100, 101, net_vss);
         builder.addTransistor("202", 104, 101, 110);
         builder.addTransistor("203", 103, 102, 110);
-        builder.addPullup("1", 100);
-        builder.addPullup("2", 101);
+        builder.addDPullup("1", 100);
+        builder.addDPullup("2", 101);
         return new Module("latchPass", builder.getGraph(), ports);
     }
 
@@ -320,8 +402,8 @@ public class ModuleGen {
         builder.addTransistor("201", 101, 100, net_vss);
         builder.addTransistor("202", 104, 102, 100);
         builder.addTransistor("203", 104, 103, 101);
-        builder.addPullup("1", 100);
-        builder.addPullup("2", 101);
+        builder.addDPullup("1", 100);
+        builder.addDPullup("2", 101);
         return new Module("clockedRSLatch", builder.getGraph(), ports);
     }
 
@@ -338,8 +420,8 @@ public class ModuleGen {
         builder.addTransistor("203", 103, 102, 111);
         builder.addTransistor("204", 110, 100, net_vss);
         builder.addTransistor("205", 111, 100, net_vcc);
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
         return new Module("clockedRSLatchPP", builder.getGraph(), ports);
     }
 
@@ -358,8 +440,8 @@ public class ModuleGen {
         builder.addTransistor("201", 101, 100, net_vss);
         builder.addTransistor("202", 102, 100, net_vss);
         builder.addTransistor("203", 103, 101, net_vss);
-        builder.addPullup("1", 100);
-        builder.addPullup("2", 101);
+        builder.addDPullup("1", 100);
+        builder.addDPullup("2", 101);
         return new Module("RSLatch", builder.getGraph(), ports);
     }
 
@@ -375,8 +457,8 @@ public class ModuleGen {
         builder.addTransistor("203", 102, 111, net_vss);
         builder.addTransistor("204", 110, 100, net_vss);
         builder.addTransistor("205", 111, 100, net_vcc);
-        builder.addPullup("1", 110);
-        builder.addPullup("2", 111);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
         return new Module("RSLatchPP", builder.getGraph(), ports);
     }
 
@@ -391,8 +473,8 @@ public class ModuleGen {
         builder.addTransistor("200", 102, 100, 110);
         builder.addTransistor("201", 103, 101, 110);
         builder.addTransistor("202", 104, 110, net_vss);
-        builder.addPullup("1", 100);
-        builder.addPullup("2", 101);
+        builder.addDPullup("1", 100);
+        builder.addDPullup("2", 101);
         return new Module("commonNAND", builder.getGraph(), ports);
     }
 
@@ -404,7 +486,7 @@ public class ModuleGen {
         ports.add(new ModulePort("B", EdgeType.INPUT, builder.addExternal(102))); // inputB
         builder.addTransistor("200", 101, 102, 100);
         builder.addTransistor("201", 102, 101, 100);
-        builder.addPullup("1", 100);
+        builder.addDPullup("1", 100);
         return new Module("crossCoupledTransistors1", builder.getGraph(), ports);
     }
 
@@ -415,8 +497,8 @@ public class ModuleGen {
         ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(101))); // output
         builder.addTransistor("200", 101, 100, net_vss);
         builder.addTransistor("201", 100, 101, net_vss);
-        builder.addPullup("1", 100);
-        builder.addPullup("2", 101);
+        builder.addDPullup("1", 100);
+        builder.addDPullup("2", 101);
         return new Module("crossCoupledTransistors2", builder.getGraph(), ports);
     }
 
@@ -448,14 +530,14 @@ public class ModuleGen {
         builder.addTransistor("204", 1018, 2753, net_vss);
         builder.addTransistor("205", 627, 2753, net_vss);
         builder.addTransistor("206", 627, 2754, net_vss);
-        builder.addPullup("1", 2753);
+        builder.addDPullup("1", 2753);
         // Low-side driver
         builder.addTransistor("212", 2718, 2759, net_vcc);
         builder.addTransistor("213", 1019, 2759, net_vss);
         builder.addTransistor("214", 1019, 2718, net_vss);
         builder.addTransistor("215", 627, 2718, net_vss);
         builder.addTransistor("216", 627, 2759, net_vss);
-        builder.addPullup("2", 2718);
+        builder.addDPullup("2", 2718);
         return new Module("abPinDriver", builder.getGraph(), ports);
     }
 
@@ -492,10 +574,11 @@ public class ModuleGen {
 
     public List<Module> getBasicModules() {
         List<Module> list = new LinkedList<Module>();
+        list.add(regfileSliceModule());
         // Storage modules
-        //list.add(storage2GaModule());
-        //list.add(storage2GbModule());
-        //list.add(storage1GModule());
+        // list.add(storage2GaModule());
+        // list.add(storage2GbModule());
+        // list.add(storage1GModule());
         // Super buffers
         list.add(superNORModule());
         list.add(superNORAltModule());

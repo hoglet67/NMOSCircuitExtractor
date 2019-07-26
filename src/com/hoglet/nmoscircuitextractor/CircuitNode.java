@@ -8,7 +8,6 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
 
     private NodeType type;
     private String id;
-    private boolean external;
     private boolean tree;
     private boolean pass;
     private boolean mark;
@@ -16,7 +15,6 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
     public CircuitNode(NodeType type, String id) {
         this.type = type;
         this.id = id;
-        this.external = false;
         this.tree = false;
         this.mark = false;
     }
@@ -39,14 +37,6 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
 
     public String toString() {
         return id;
-    }
-
-    public void setExternal(boolean external) {
-        this.external = external;
-    }
-
-    public boolean isExternal() {
-        return external;
     }
 
     public boolean isTree() {
@@ -92,6 +82,10 @@ public abstract class CircuitNode implements Comparable<CircuitNode> {
     @Override
     public int compareTo(CircuitNode o) {
         return (type.name() + "_" + id).compareTo(o.type.name() + "_" + o.id);
+    }
+
+    public boolean isExternal() {
+        return false;
     }
 
 }

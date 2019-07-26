@@ -73,12 +73,31 @@ public class CircuitGraphBuilder {
         return net;
     }
 
-    public TransistorNode addPullup(String id, Integer net) {
-        return addPullup(id, "" + net);
+    public NetNode addGlobal(String ext) {
+        NetNode net = addNet(ext);
+        net.setGlobal(true);
+        net.setExternal(true);
+        return net;
     }
 
-    public TransistorNode addPullup(String id, String net) {
-        TransistorNode tr = new TransistorNode(NodeType.VT_DPULLUP, id);
+    public TransistorNode addDPullup(String id, Integer net) {
+        return addDPullup(id, "" + net);
+    }
+
+    public TransistorNode addDPullup(String id, String net) {
+        return addPullup(id, net, NodeType.VT_DPULLUP);
+    }
+
+    public TransistorNode addEPullup(String id, Integer net) {
+        return addEPullup(id, "" + net);
+    }
+
+    public TransistorNode addEPullup(String id, String net) {
+        return addPullup(id, net, NodeType.VT_EPULLUP);
+    }
+
+    private TransistorNode addPullup(String id, String net, NodeType type) {
+        TransistorNode tr = new TransistorNode(type, id);
         String hash = getHash(tr, net, null, null);
         if (duplicate_map.contains(hash)) {
             System.out.println("Skipping duplicate transistor: " + tr.getId());
@@ -137,13 +156,11 @@ public class CircuitGraphBuilder {
         // Enhancement Pullup
         if (gateNet.equals(net_vcc) && channel1Net.equals(net_vcc)) {
 
-            tr = new TransistorNode(NodeType.VT_EPULLUP, id);
-            c1 = channel2Net;
+            return addEPullup(id, channel2Net);
 
         } else if (gateNet.equals(net_vcc) && channel2Net.equals(net_vcc)) {
 
-            tr = new TransistorNode(NodeType.VT_EPULLUP, id);
-            c1 = channel1Net;
+            return addEPullup(id, channel1Net);
 
         } else {
 
@@ -297,7 +314,7 @@ public class CircuitGraphBuilder {
             if (!netMap.containsKey(net)) {
                 System.out.println("Warning: pullup on unused net " + net);
             }
-            addPullup("pullup" + net, net);
+            addDPullup("pullup" + net, net);
         }
 
         return graph;

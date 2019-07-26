@@ -5,12 +5,16 @@ public class NetNode extends CircuitNode {
     private int degree;
     private int channelConstraint;
     private boolean digital;
+    private boolean external;
+    private boolean global;
 
     public NetNode(String id) {
         super(NodeType.VT_NET, id);
         degree = 0;
         channelConstraint = -1;
-        setDigital(false);
+        this.digital = false;
+        this.external = false;
+        this.global = false;
     }
 
     public int getDegree() {
@@ -39,5 +43,21 @@ public class NetNode extends CircuitNode {
 
     public void setDigital(boolean digital) {
         this.digital = digital;
+    }
+
+    public void setExternal(boolean external) {
+        this.external = external;
+    }
+
+    public boolean isExternal() {
+        return external;
+    }
+
+    public boolean isGlobal() {
+        return global;
+    }
+
+    public void setGlobal(boolean global) {
+        this.global = global;
     }
 }
