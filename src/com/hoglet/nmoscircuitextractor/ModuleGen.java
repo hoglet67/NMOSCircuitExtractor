@@ -576,9 +576,9 @@ public class ModuleGen {
         List<Module> list = new LinkedList<Module>();
         list.add(regfileSliceModule());
         // Storage modules
-        // list.add(storage2GaModule());
-        // list.add(storage2GbModule());
-        // list.add(storage1GModule());
+        list.add(storage2GaModule());
+        list.add(storage2GbModule());
+        list.add(storage1GModule());
         // Super buffers
         list.add(superNORModule());
         list.add(superNORAltModule());
@@ -586,6 +586,21 @@ public class ModuleGen {
         list.add(superComplementaryModule());
         list.add(superInvertorModule());
         list.add(superBufferModule());
+        // Latches
+        // list.add(latchPassModule(true, false));
+        // list.add(latchPassModule(false, true));
+        // list.add(latchPassModule(true, true));
+        // list.add(latchModule(true, false));
+        // list.add(latchModule(false, true));
+        // list.add(latchModule(true, true));
+        // list.add(clockedRSLatchPPModule());
+        // list.add(clockedRSLatchModule(true, false)); // breaks at this point
+        // list.add(clockedRSLatchModule(false, true));
+        // list.add(clockedRSLatchModule(true, true));
+        // list.add(setResetLatchPPModule());
+        // list.add(setResetLatchModule(true, false));
+        // list.add(setResetLatchModule(false, true));
+        // list.add(setResetLatchModule(true, true));
         return list;
     }
 

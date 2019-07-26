@@ -619,7 +619,7 @@ public class CircuitGraphReducer {
                             digital.add(net);
                             net.setDigital(true);
                         } else {
-                            System.out.println("Warning: Module output drives " + net + " that is not marked as digital");
+                            System.out.println("Warning: Module " + node + " output drives " + net + " that is not marked as digital");
                         }
                         break;
                     }

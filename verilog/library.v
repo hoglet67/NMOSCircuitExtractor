@@ -99,6 +99,72 @@ module storage2Gb(input eclk, input erst, input D, input G1, input G2, output re
 endmodule
 
 
+module latch(input eclk, input erst, input CLK, input D,  output Q, output NQ);
+   reg latch;
+   always @(posedge eclk)
+     if (erst) begin
+       latch <= 1'b0;
+     end else begin
+        if (!CLK)
+          latch <= D;
+     end
+   assign Q = latch;
+   assign NQ = !latch;
+endmodule
+
+module latchPass(input eclk, input erst, input WR, input NWR, input D,  output Q, output NQ);
+   reg latch;
+   always @(posedge eclk)
+     if (erst) begin
+       latch <= 1'b0;
+     end else begin
+        if (WR & !NWR)
+          latch <= D;
+     end
+   assign Q = latch;
+   assign NQ = !latch;
+endmodule
+
+//module RSLatch(input eclk, input erst, input S, input R, output reg Q, output reg NQ);
+//   always @(posedge eclk)
+//     if (erst) begin
+//       Q <= 1'b0;
+//       NQ <= 1'b1;
+//     end else begin
+//        if (S & !R)
+//          {Q, NQ} <= 2'b10;
+//        else if (R & !S)
+//          {Q, NQ} <= 2'b01;
+//        else if (S & R)
+//          {Q, NQ} <= 2'b00;
+//     end
+//endmodule
+
+module RSLatch(input eclk, input erst, input S, input R, output Q, output NQ);
+   reg latch;
+   always @(posedge eclk)
+     if (erst) begin
+       latch <= 1'b0;
+     end else begin
+        if (S & !R)
+          latch <= 1'b1;
+        else if (R & !S)
+          latch <= 1'b0;
+     end
+   assign Q = latch & !R;
+   assign NQ = !latch & !S;
+endmodule
+
+module clockedRSLatch(input eclk, input erst, input CLK, input NS, input NR, output Q, output NQ);
+   wire R = CLK & !NR;
+   wire S = CLK & !NS;
+   RSLatch latch(eclk, erst, S, R, Q, NQ);
+endmodule
+
+module clockedRSLatchPP(input eclk, input erst, input CLK, input NS, input NR, output Q, output NQ);
+   clockedRSLatch latch (eclk, erst, CLK, NS, NR, Q, NQ);
+endmodule
+
 module regfileSlice
   (
    input      eclk,
