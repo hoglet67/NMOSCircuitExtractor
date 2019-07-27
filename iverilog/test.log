@@ -1,0 +1,41 @@
+reset asserted
+fetch rd: [ffff] = 00
+reset released
+fetch rd: [0000] = 3f
+fetch rd: [0001] = 31
+  mem rd: [0002] = 00
+  mem rd: [0003] = 10
+fetch rd: [0004] = 3e
+  mem rd: [0005] = 7f
+fetch rd: [0006] = 06
+  mem rd: [0007] = 03
+fetch rd: [0008] = f5
+  mem wr: [0fff] = 7f
+  mem wr: [0ffe] = d4
+fetch rd: [0009] = 3c
+fetch rd: [000a] = d3
+  mem rd: [000b] = aa
+   io wr: [80aa] = 80
+fetch rd: [000c] = 10
+  mem rd: [000d] = fa
+fetch rd: [0008] = f5
+  mem wr: [0ffd] = 80
+  mem wr: [0ffc] = 94
+fetch rd: [0009] = 3c
+fetch rd: [000a] = d3
+  mem rd: [000b] = aa
+   io wr: [81aa] = 81
+fetch rd: [000c] = 10
+  mem rd: [000d] = fa
+fetch rd: [0008] = f5
+  mem wr: [0ffb] = 81
+  mem wr: [0ffa] = 80
+fetch rd: [0009] = 3c
+fetch rd: [000a] = d3
+  mem rd: [000b] = aa
+   io wr: [82aa] = 82
+fetch rd: [000c] = 10
+  mem rd: [000d] = fa
+fetch rd: [000e] = 00
+fetch rd: [000f] = 76
+halted

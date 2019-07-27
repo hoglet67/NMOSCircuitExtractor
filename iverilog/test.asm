@@ -1,3 +1,4 @@
+   ccf
    ld   sp, $1000
    ld   a, 127
    ld   b, 3

@@ -107,7 +107,7 @@ module main();
    // 3e LD a,n
    // 3c inc a
 
-   ram_6502 _ram(eclk, ereset, clk, ab, db_i, db_o, _wr);
+   ram_6502 _ram_6502(eclk, ereset, clk, ab, db_i, db_o, _wr);
 
 `ifndef verilator
    initial begin
