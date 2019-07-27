@@ -1,6 +1,5 @@
 package com.hoglet.nmoscircuitextractor;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -87,9 +86,9 @@ public class ModuleGen {
         builder.addEPullup("pull3", "pcbit");
         builder.addEPullup("pull4", "_pcbit");
 
-        builder.addTransistor("uinv", "reg_din", "_reg_din", net_vss);
-        builder.addDPullup("pull5", "_reg_din");
-        addSuperComplementary(builder, "sc2", "_reg_din", "regP", "regN");
+        //builder.addTransistor("uinv", "reg_din", "_reg_din", net_vss);
+        //builder.addDPullup("pull5", "_reg_din");
+        addSuperComplementary(builder, "sc2", "reg_din", "regP", "regN");
 
         builder.addTransistor("regout", "_regbit", "reg_dout", net_vss);
         builder.addDPullup("pullregout", "reg_dout");
@@ -576,14 +575,14 @@ public class ModuleGen {
         List<Module> list = new LinkedList<Module>();
         list.add(regfileSliceModule());
         // Storage modules
-        list.add(storage2GaModule());
-        list.add(storage2GbModule());
-        list.add(storage1GModule());
-        // Super buffers
+//        list.add(storage2GaModule());
+//        list.add(storage2GbModule());
+//        list.add(storage1GModule());
+//        // Super buffers
         list.add(superNORModule());
-        list.add(superNORAltModule());
+//        list.add(superNORAltModule());
         list.add(superNANDModule());
-        list.add(superComplementaryModule());
+//        list.add(superComplementaryModule());
         list.add(superInvertorModule());
         list.add(superBufferModule());
         // Latches
