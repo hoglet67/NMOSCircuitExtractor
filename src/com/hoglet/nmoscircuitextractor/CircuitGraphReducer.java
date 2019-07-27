@@ -814,7 +814,7 @@ public class CircuitGraphReducer {
     // Graph Validation
     // ============================================================
 
-    public void validateGraph() {
+    public void validateGraph(boolean validateAnalog) {
         int count = 0;
         Set<NetNode> nets = new TreeSet<NetNode>();
         for (CircuitNode node : graph.vertexSet()) {
@@ -829,6 +829,7 @@ public class CircuitGraphReducer {
             int n_channel = 0;
             int n_output = 0;
             int n_bidirectional = 0;
+            int n_input = 0;
             int fanout = edges.size();
             for (CircuitEdge edge : edges) {
                 switch (edge.getType()) {
@@ -840,6 +841,10 @@ public class CircuitGraphReducer {
                     break;
                 case BIDIRECTIONAL:
                     n_bidirectional++;
+                    break;
+                case INPUT:
+                case GATE:
+                    n_input++;
                     break;
                 default:
                 }
@@ -854,11 +859,27 @@ public class CircuitGraphReducer {
                         + edge.getType().name() + "]");
                 count++;
             }
+            if (validateAnalog && !node.isDigital()) {
+                if (edges.size() - n_input == 1) {
+                    System.out.println("Warning: net  " + node.getId() + " is analog, but has only one driver");
+                    count++;
+                }
+                if (edges.size() - n_input - n_output == 0) {
+                    System.out.println("Warning: net  " + node.getId() + " is analog, but has only input and output ports");
+                    count++;
+                }
+            }
             if (n_channel + n_output + n_bidirectional == 0) {
                 System.out.println("Warning: net  " + node.getId() + " (fanout = " + fanout + ") has no drivers");
                 count++;
-            } else if (n_output > 1) {
+            }
+            if (n_output > 1) {
                 System.out.println("Warning: net  " + node.getId() + " (fanout = " + fanout + ") has multiple output drivers ("
+                        + n_output + ")");
+                count++;
+            }
+            if (n_bidirectional > 0) {
+                System.out.println("Warning: net  " + node.getId() + " (fanout = " + fanout + ") has bidirectional drivers ("
                         + n_output + ")");
                 count++;
             }

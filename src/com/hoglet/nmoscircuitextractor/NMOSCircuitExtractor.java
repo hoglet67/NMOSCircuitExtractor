@@ -83,7 +83,7 @@ public class NMOSCircuitExtractor {
             CircuitGraphReducer reducer = new CircuitGraphReducer(builder.getGraph(), net_vss, net_vcc, ignoreWarnings);
             reducer.dumpStats();
             if (validate) {
-                reducer.validateGraph();
+                reducer.validateGraph(false);
             }
             reducer.dumpGraph(new File("netlist1.txt"));
 
@@ -94,7 +94,7 @@ public class NMOSCircuitExtractor {
             }
             reducer.dumpStats();
             if (validate) {
-                reducer.validateGraph();
+                reducer.validateGraph(false);
             }
             reducer.dumpGraph(new File("netlist2.txt"));
 
@@ -111,7 +111,7 @@ public class NMOSCircuitExtractor {
 
             reducer.dumpStats();
             if (validate) {
-                reducer.validateGraph();
+                reducer.validateGraph(false);
             }
             reducer.dumpGraph(new File("netlist3.txt"));
 
@@ -119,7 +119,7 @@ public class NMOSCircuitExtractor {
             reducer.markDigitalNets();
             reducer.dumpStats();
             if (validate) {
-                reducer.validateGraph();
+                reducer.validateGraph(true);
             }
             reducer.dumpGraph(new File("netlist4.txt"));
 
