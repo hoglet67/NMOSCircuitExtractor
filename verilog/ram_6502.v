@@ -26,18 +26,9 @@ module ram_6502(input eclk,ereset, input clk, input [15:0] a, output reg [7:0] d
       pc = pc + 1;
       c = $fgetc(fp);
     end
-    reset = 16'h`RESET;
-    mem[16'hfffc] = reset[7:0];
-    mem[16'hfffd] = reset[15:8];
     $display($time,,"done initializing RAM; last address 0x%04x",pc);
   end
 `endif
-
-  reg key_ready /*verilator public*/;
-  reg display_ready;
-  reg display_first;
-  reg display_flag /*verilator public*/;
-  reg [7:0] display_byte /*verilator public*/;
 
   reg clk1;
 
@@ -45,38 +36,11 @@ module ram_6502(input eclk,ereset, input clk, input [15:0] a, output reg [7:0] d
     if (ereset) begin
       dout <= 0;
       clk1 <= 0;
-      key_ready <= 0;
-      display_ready <= 1;
-      display_first <= 1;
-      display_flag <= 0;
-      display_byte <= 8'd0;
     end else begin
       clk1 <= clk;
-      dout <= (a==16'hd011) ? {key_ready,7'd0} : ((a==16'hd012)||(a==16'hd0f2)) ? {!display_ready,mem[a][6:0]} : mem[a];
-//      dout <= (a==16'hd011) ? {key_ready,mem[a][6:0]} : mem[a];
-
-      if (!clk && clk1 && rw) begin                   //reads
-        if (a==16'hd011) begin
-//          $display("read d011; clearing flag");
-          key_ready <= 0;
-        end
-//        if (a==16'hd012) begin
-//          $display("read d012; value is 0x%02x 0x%02x",mem[a],dout);
-//        end
-      end
-
+      dout <= mem[a];
       if (!clk && clk1 && !rw) begin                  // writes
-`ifdef DISPLAY_WRITES
-        $display("mem[%04x] <- %02x",a,din);
-`endif
         mem[a] <= din;
-        if ((a==16'hd012)||(a==16'hd0f2)) begin  // fixme: separate peripheral code from generic RAM code
-          if (!display_first) begin
-            display_byte <= din&8'h7f;
-            display_flag <= 1;
-          end
-          display_first <= 0;
-        end
       end
     end
 

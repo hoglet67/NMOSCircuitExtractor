@@ -18,10 +18,44 @@ module main();
    wire        _m1, _rd, _wr, _mreq, _iorq, _rfsh, _halt, _busak;
    wire        clk;
 
+   reg         _rd_last;
+   reg         _wr_last;
+   reg         _reset_last;
+
    assign _wait = 1;
    assign _int = 1;
    assign _nmi = 1;
    assign _busrq = 1;
+
+   // Log bus activity
+   always @(posedge clk) begin
+      if (!_halt) begin
+        $display("halted");
+        $finish;
+      end
+      if (_reset_last & !_reset)
+        $display("reset asserted");
+      if (!_reset_last & _reset)
+        $display("reset released");
+      if (_rd_last & !_rd) begin
+         if (!_mreq & !_m1)
+           $display("fetch rd: [%04x] = %02x",ab,db_i);
+         if (!_mreq & _m1)
+           $display("  mem rd: [%04x] = %02x",ab,db_i);
+         if (!_iorq)
+           $display("   io rd: [%04x] = %02x",ab,db_i);
+      end
+      if (_wr_last & !_wr) begin
+         if (!_mreq)
+           $display("  mem wr: [%04x] = %02x",ab,db_o);
+         if (!_iorq)
+           $display("   io wr: [%04x] = %02x",ab,db_o);
+      end
+      _wr_last <= _wr;
+      _rd_last <= _rd;
+      _reset_last <= _reset;
+   end
+
 
    clocks_6502 _clocks(eclk, ereset, _reset, clk);
 
@@ -68,12 +102,12 @@ module main();
       db_i[7], db_o[7], db_t[7]
     );
 
-   assign db_i = 8'hf5;
+   //assign db_i = 8'hf5;
    // f5 PUSH AF
    // 3e LD a,n
    // 3c inc a
 
-   // ram_6502 _ram(eclk, ereset, clk, ab, db_i, db_o, _wr);
+   ram_6502 _ram(eclk, ereset, clk, ab, db_i, db_o, _wr);
 
 `ifndef verilator
    initial begin
