@@ -5,5 +5,6 @@ netlist3.txt
 netlist4.txt
 verilog/chip_z80.v
 iverilog/a.out
+iverilog/test.log
 iverilog/test_z80.lxt
 iverilog/test.bin

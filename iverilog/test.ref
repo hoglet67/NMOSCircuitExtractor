@@ -1,3 +1,5 @@
+LXT2 info: dumpfile test_z80.lxt opened for output.
+                4000 done initializing RAM; last address 0x00000010
 reset asserted
 fetch rd: [ffff] = 00
 reset released

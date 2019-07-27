@@ -86,8 +86,8 @@ public class ModuleGen {
         builder.addEPullup("pull3", "pcbit");
         builder.addEPullup("pull4", "_pcbit");
 
-        //builder.addTransistor("uinv", "reg_din", "_reg_din", net_vss);
-        //builder.addDPullup("pull5", "_reg_din");
+        // builder.addTransistor("uinv", "reg_din", "_reg_din", net_vss);
+        // builder.addDPullup("pull5", "_reg_din");
         addSuperComplementary(builder, "sc2", "reg_din", "regP", "regN");
 
         builder.addTransistor("regout", "_regbit", "reg_dout", net_vss);
@@ -166,22 +166,24 @@ public class ModuleGen {
         return new Module("superNOR", builder.getGraph(), ports);
     }
 
-    private Module superNORAltModule() {
-        List<ModulePort> ports = new LinkedList<ModulePort>();
-        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
-        ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
-        ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
-        ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
-        builder.addDPullup("1", 110);
-        builder.addDPullup("2", 111);
-        builder.addTransistor("200", 100, 110, net_vss);
-        builder.addTransistor("201", 101, 110, net_vss);
-        builder.addTransistor("202", 110, 111, net_vss);
-        builder.addTransistor("203", 101, 111, net_vss);
-        builder.addTransistor("204", 111, 102, net_vcc);
-        builder.addTransistor("205", 110, 102, net_vss);
-        return new Module("superNORAlt", builder.getGraph(), ports);
-    }
+// Don't try to extract this module, it's actually a buffer with output enable!
+//    
+//    private Module superNORAltModule() {
+//        List<ModulePort> ports = new LinkedList<ModulePort>();
+//        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
+//        ports.add(new ModulePort("I1", EdgeType.INPUT, builder.addExternal(100))); // input
+//        ports.add(new ModulePort("I2", EdgeType.INPUT, builder.addExternal(101))); // input
+//        ports.add(new ModulePort("O", EdgeType.OUTPUT, builder.addExternal(102))); // output
+//        builder.addDPullup("1", 110);
+//        builder.addDPullup("2", 111);
+//        builder.addTransistor("200", 100, 110, net_vss);
+//        builder.addTransistor("201", 101, 110, net_vss);
+//        builder.addTransistor("202", 110, 111, net_vss);
+//        builder.addTransistor("203", 101, 111, net_vss);
+//        builder.addTransistor("204", 111, 102, net_vcc);
+//        builder.addTransistor("205", 110, 102, net_vss);
+//        return new Module("superNORAlt", builder.getGraph(), ports);
+//    }
 
     private Module superNANDModule() {
         List<ModulePort> ports = new LinkedList<ModulePort>();
@@ -573,18 +575,21 @@ public class ModuleGen {
 
     public List<Module> getBasicModules() {
         List<Module> list = new LinkedList<Module>();
+        // Register file
         list.add(regfileSliceModule());
         // Storage modules
-//        list.add(storage2GaModule());
-//        list.add(storage2GbModule());
-//        list.add(storage1GModule());
-//        // Super buffers
+        list.add(storage2GaModule());
+        list.add(storage2GbModule());
+        list.add(storage1GModule());
+        // Super buffers
+        // list.add(superComplementaryModule()); // only used in reg file
         list.add(superNORModule());
-//        list.add(superNORAltModule());
         list.add(superNANDModule());
-//        list.add(superComplementaryModule());
         list.add(superInvertorModule());
         list.add(superBufferModule());
+        // Complex gates
+        list.add(xor2Module());
+        list.add(xnor2Module());
         // Latches
         // list.add(latchPassModule(true, false));
         // list.add(latchPassModule(false, true));
@@ -617,7 +622,6 @@ public class ModuleGen {
         list.add(xor2Module());
         list.add(xnor2Module());
         list.add(superNORModule());
-        list.add(superNORAltModule());
         list.add(superNANDModule());
         list.add(superComplementaryModule());
         list.add(superInvertorModule());

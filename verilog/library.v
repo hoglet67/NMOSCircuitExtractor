@@ -14,6 +14,22 @@ module transistor_function_init1(input eclk, input erst, input i, output reg o);
         o <= ~i;
 endmodule
 
+module xor2(input eclk, input erst, input A, input B, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= A ^ B;
+endmodule
+
+module xnor2(input eclk, input erst, input A, input B, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= A ~^ B;
+endmodule
+
 module pushPull(input eclk, input erst, input IH, input IL, output reg O);
    always @(posedge eclk)
      if (erst)
