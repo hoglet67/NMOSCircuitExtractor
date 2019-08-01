@@ -1,3 +1,6 @@
+#*
+*~
+not_in_git/
 bin/
 netlist1.txt
 netlist2.txt
@@ -8,3 +11,5 @@ iverilog/a.out
 iverilog/test.log
 iverilog/test_z80.lxt
 iverilog/test.bin
+vivado.jou
+vivado.log
