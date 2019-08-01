@@ -619,7 +619,8 @@ public class CircuitGraphReducer {
                             digital.add(net);
                             net.setDigital(true);
                         } else {
-                            System.out.println("Warning: Module " + node + " output drives " + net + " that is not marked as digital");
+                            System.out.println(
+                                    "Warning: Module " + node + " output drives " + net + " that is not marked as digital");
                         }
                         break;
                     }
@@ -629,14 +630,14 @@ public class CircuitGraphReducer {
                 }
             }
         }
-        System.out.println("Nets driven that are digital:");
-        for (NetNode net : digital) {
-            System.out.println("    " + net);
-        }
-        System.out.println("Nets driven that are analog:");
-        for (NetNode net : analog) {
-            System.out.println("    " + net);
-        }
+        // System.out.println("Nets driven that are digital:");
+        // for (NetNode net : digital) {
+        // System.out.println(" " + net);
+        // }
+        // System.out.println("Nets driven that are analog:");
+        // for (NetNode net : analog) {
+        // System.out.println(" " + net);
+        // }
         System.out.println("Summary:");
         System.out.println(" num_digital  = " + digital.size());
         System.out.println(" num_analog   = " + analog.size());

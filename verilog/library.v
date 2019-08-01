@@ -46,12 +46,29 @@ module superBuffer(input eclk, input erst, input I, output reg O);
        O <= I;
 endmodule
 
+module superPushPull(input eclk, input erst, input I, output reg O);
+   always @(posedge eclk)
+     if (erst)
+       O <= 1'b0;
+     else
+       O <= I;
+endmodule
+
 module superInverter(input eclk, input erst, input I, output reg O);
    always @(posedge eclk)
      if (erst)
        O <= 1'b0;
      else
        O <= ~I;
+endmodule
+
+module abPinDriver(input eclk, input erst, input I, input NI, input OE, output reg AB);
+   // TODO: implement tri state
+   always @(posedge eclk)
+     if (erst)
+       AB <= 1'b0;
+     else
+       AB <= I ? 1'b1 : 1'b0;
 endmodule
 
 module superComplementary(input eclk, input erst, input I, output reg O1, output reg O2);
