@@ -71,7 +71,7 @@ m5: 209,
 m6: 210,
 // EXX latches
 ex_af: 631,
-ex_bcdehl: 1770,
+ex_bcdehl: 634,
 ex_dehl0: 625,
 ex_dehl1: 629,
 ex_dehl_combined: 626,
