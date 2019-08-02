@@ -21,18 +21,29 @@ module main();
    reg         _rd_last;
    reg         _wr_last;
    reg         _reset_last;
+   reg         _halt_last;
 
    assign _wait = 1;
    assign _int = 1;
    assign _nmi = 1;
    assign _busrq = 1;
 
+   integer     halt_count = 0;
+
+   always @(posedge clk) begin
+      if (_halt_last & !_halt) begin
+         $display("halted");
+      end
+      if (!_halt) begin
+         halt_count <= halt_count + 1;
+         if (halt_count == 625)
+           $finish;
+      end
+      _halt_last <= _halt;
+   end
+
    // Log bus activity
    always @(posedge clk) begin
-      if (!_halt) begin
-        $display("halted");
-        $finish;
-      end
       if (_reset_last & !_reset)
         $display("reset asserted");
       if (!_reset_last & _reset)
@@ -113,8 +124,6 @@ module main();
    initial begin
       $dumpfile("test_z80.lxt");
       $dumpvars(0,main);
-      #`MAXTICKS;
-      $finish();
    end
 `endif
 

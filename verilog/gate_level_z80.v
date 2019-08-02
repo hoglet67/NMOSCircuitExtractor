@@ -17,12 +17,16 @@ module gate_level_z80
   , output [7:0] data
   , input  [3:0] btn
   , output [3:0] led
+  , input rxd
+  , output txd
  );
 
    wire        eclk;
    wire        erst;
    wire        locked;
    wire [15:0] ab;
+   wire [7:0]  ram_dout;
+   wire [7:0]  uart_dout;
    wire [7:0]  db_i;
    wire [7:0]  db_o;
    reg [31:0]  c;
@@ -69,8 +73,8 @@ module gate_level_z80
         clk <= 0;
         i <= 0;
      end else begin
-        c <= c + 1;
-        // TODO: this will wrap every 68 seconds
+        if (c != 32'hFFFFFFFF)
+          c <= c + 1;
         if (c==`HALFCYCLE * 10)
           _reset <= 0;
         if (c==`HALFCYCLE * 20)
@@ -136,13 +140,50 @@ module gate_level_z80
       .pad_db7_o(db_o[7])
     );
 
-ram_64Kx8 ram
+   ram_64Kx8 ram
      (
       .clk(eclk),
       .a(ab),
-      .dout(db_i),
+      .dout(ram_dout),
       .din(db_o),
-      .wr(~_wr)
+      .wr((~_wr) & (~mreq))
       );
+
+   reg last_clk;
+   reg last_iorq;
+   reg _uart_cs;
+
+   // Generate a 1 cycle long CS pulse for the UART on the rising
+   // edge of the first clock cycle in the IO cycle (end of T2)
+
+   always @(posedge eclk) begin
+      last_clk <= clk;
+      _uart_cs <= 1'b1;
+      if (clk & !last_clk) begin
+         last_iorq <= _iorq;
+         if (last_iorq & !_iorq & ab[7:1] == 7'b1010101)
+            _uart_cs <= 1'b0;
+      end
+   end
+
+   uart
+     #(
+      .CLKSPEED(62500000),
+      .BAUD(115200)
+      )
+     uart0
+     (
+      .clk(eclk),
+      .reset_b(_reset),
+      .cs_b(_uart_cs),
+      .rnw(_wr),
+      .a0(!ab[0]),
+      .dout(uart_dout),
+      .din(db_o),
+      .rxd(rxd),
+      .txd(txd)
+      );
+
+   assign db_i = _iorq ? ram_dout : uart_dout;
 
 endmodule
