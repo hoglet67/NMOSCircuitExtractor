@@ -158,6 +158,22 @@ module latchPass(input eclk, input erst, input WR, input NWR, input D,  output Q
    assign NQ = !latch;
 endmodule
 
+module latchToggle(input eclk, input erst, input P, input T,  output Q, output NQ);
+   reg latch;
+   reg T_last;
+   // The precharge input P is not required, as we use an edge detector
+   always @(posedge eclk)
+     if (erst) begin
+        latch <= 1'b0;
+     end else begin
+        T_last <= T;
+        if (T & !T_last)
+          latch <= !latch;
+     end
+   assign Q = latch;
+   assign NQ = !latch;
+endmodule
+
 //module RSLatch(input eclk, input erst, input S, input R, output reg Q, output reg NQ);
 //   always @(posedge eclk)
 //     if (erst) begin

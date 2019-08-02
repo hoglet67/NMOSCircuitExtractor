@@ -151,7 +151,7 @@ public class ModuleGen {
         builder.addDPullup("2", 112);
         builder.addTransistor("203", 111, 112, net_vss);
         builder.addTransistor("204", 111, 113, net_vss);
-        builder.addTransistor("205", 112, 113, net_vcc);        
+        builder.addTransistor("205", 112, 113, net_vcc);
         builder.addTransistor("206", 113, 101, net_vss);
         builder.addTransistor("207", 111, 101, net_vcc);
         return new Module("superPushPull", builder.getGraph(), ports);
@@ -414,6 +414,53 @@ public class ModuleGen {
         return new Module("latchPass", builder.getGraph(), ports);
     }
 
+    private Module latchTogglePPModule() {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
+        ports.add(new ModulePort("P", EdgeType.INPUT, builder.addExternal(100))); // precharge
+        ports.add(new ModulePort("T", EdgeType.INPUT, builder.addExternal(101))); // toggle
+        ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(102))); // out
+        builder.addTransistor("200", 110, 111, net_vss);
+        builder.addTransistor("201", 111, 110, net_vss);
+        builder.addTransistor("202", 100, 110, 112);
+        builder.addTransistor("203", 100, 112, 113);
+        builder.addTransistor("204", 113, 114, net_vss);
+        builder.addTransistor("205", 101, 114, 110);
+        builder.addTransistor("206", 100, 111, 115);
+        builder.addTransistor("207", 100, 115, 116);
+        builder.addTransistor("208", 116, 117, net_vss);
+        builder.addTransistor("209", 101, 117, 111);
+        builder.addTransistor("210", 111, 102, net_vss);
+        builder.addTransistor("211", 110, 102, net_vcc);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
+        return new Module("latchToggle", builder.getGraph(), ports);
+    }
+
+    private Module latchToggleModule(boolean incNQ) {
+        List<ModulePort> ports = new LinkedList<ModulePort>();
+        CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
+        ports.add(new ModulePort("P", EdgeType.INPUT, builder.addExternal(100))); // precharge
+        ports.add(new ModulePort("T", EdgeType.INPUT, builder.addExternal(101))); // toggle
+        ports.add(new ModulePort("Q", EdgeType.OUTPUT, builder.addExternal(110))); // out
+        if (incNQ) {
+            ports.add(new ModulePort("NQ", EdgeType.OUTPUT, builder.addExternal(111))); // out
+        }
+        builder.addTransistor("200", 110, 111, net_vss);
+        builder.addTransistor("201", 111, 110, net_vss);
+        builder.addTransistor("202", 100, 110, 112);
+        builder.addTransistor("203", 100, 112, 113);
+        builder.addTransistor("204", 113, 114, net_vss);
+        builder.addTransistor("205", 101, 114, 110);
+        builder.addTransistor("206", 100, 111, 115);
+        builder.addTransistor("207", 100, 115, 116);
+        builder.addTransistor("208", 116, 117, net_vss);
+        builder.addTransistor("209", 101, 117, 111);
+        builder.addDPullup("1", 110);
+        builder.addDPullup("2", 111);
+        return new Module("latchToggle", builder.getGraph(), ports);
+    }
+
     private Module clockedRSLatchModule(boolean incQ, boolean incNQ) {
         List<ModulePort> ports = new LinkedList<ModulePort>();
         CircuitGraphBuilder builder = new CircuitGraphBuilder(net_vss, net_vcc);
@@ -626,10 +673,6 @@ public class ModuleGen {
         List<Module> list = new LinkedList<Module>();
         // Register file
         list.add(regfileSliceModule());
-        // Storage modules
-        list.add(storage2GaModule());
-        list.add(storage2GbModule());
-        list.add(storage1GModule());
         // Super buffers
         // list.add(superComplementaryModule()); // only used in reg file
         // list.add(superPushPullModule());
@@ -641,12 +684,19 @@ public class ModuleGen {
         list.add(xor2Module());
         list.add(xnor2Module());
         // Latches
-        // list.add(latchPassModule(true, false));
-        // list.add(latchPassModule(false, true));
-        // list.add(latchPassModule(true, true));
-        // list.add(latchModule(true, false));
-        // list.add(latchModule(false, true));
-        // list.add(latchModule(true, true));
+        list.add(latchTogglePPModule());
+        list.add(latchToggleModule(false));
+        list.add(latchToggleModule(true));
+//        list.add(latchPassModule(true, false));
+//        list.add(latchPassModule(false, true));
+//        list.add(latchPassModule(true, true));
+//        list.add(latchModule(true, false));
+//        list.add(latchModule(false, true));
+//        list.add(latchModule(true, true));
+        // Storage modules
+        list.add(storage2GaModule());
+        list.add(storage2GbModule());
+        list.add(storage1GModule());
         // list.add(clockedRSLatchPPModule());
         // list.add(clockedRSLatchModule(true, false)); // breaks at this point
         // list.add(clockedRSLatchModule(false, true));
