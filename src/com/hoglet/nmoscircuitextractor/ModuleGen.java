@@ -676,13 +676,13 @@ public class ModuleGen {
         // Super buffers
         // list.add(superComplementaryModule()); // only used in reg file
         // list.add(superPushPullModule());
-        list.add(superNORModule());
-        list.add(superNANDModule());
-        list.add(superInvertorModule());
-        list.add(superBufferModule());
+//        list.add(superNORModule());
+//        list.add(superNANDModule());
+//        list.add(superInvertorModule());
+//        list.add(superBufferModule());
         // Complex gates
-        list.add(xor2Module());
-        list.add(xnor2Module());
+//        list.add(xor2Module());
+//        list.add(xnor2Module());
         // Latches
         list.add(latchTogglePPModule());
         list.add(latchToggleModule(false));
