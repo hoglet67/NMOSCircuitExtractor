@@ -18,5 +18,7 @@ test_allasm:
 	xxd -r -p trace.hex trace.bin
 	~/atom/Z80Decoder/decodez80 -d 0 -a -h -i -s2 -y --cpu nmos_zilog --phi= --wait= trace.bin > trace.log
 	cat trace.log
+	rm -f trace.hex trace.bin
+
 clean:
 	rm -f a.out *.lxt
