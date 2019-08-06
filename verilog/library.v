@@ -160,14 +160,14 @@ endmodule
 
 module latchToggle(input eclk, input erst, input P, input T,  output Q, output NQ);
    reg latch;
-   reg T_last;
+   reg [5:0] T_last;
    // The precharge input P is not required, as we use an edge detector
    always @(posedge eclk)
      if (erst) begin
         latch <= 1'b0;
      end else begin
-        T_last <= T;
-        if (T & !T_last)
+        T_last <= { T_last[5:0], T};
+        if (T_last == 6'b000111)
           latch <= !latch;
      end
    assign Q = latch;
