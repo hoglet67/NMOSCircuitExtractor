@@ -140,28 +140,26 @@ module gate_level_z80
       .pad_db7_o(db_o[7])
     );
 
-   ram_64Kx8 ram
-     (
-      .clk(eclk),
-      .a(ab),
-      .dout(ram_dout),
-      .din(db_o),
-      .wr((~_wr) & (~mreq))
-      );
-
    reg last_clk;
    reg last_iorq;
+   reg last_mreq_and_wr;
    reg _uart_cs;
+   reg ram_wr;
+
+   always @(posedge eclk) begin
+      last_clk <= clk;
+   end
 
    // Generate a 1 cycle long CS pulse for the UART on the rising
    // edge of the first clock cycle in the IO cycle (end of T2)
 
+   wire uart_select = (ab[7:1] == 7'b1010101);
+
    always @(posedge eclk) begin
-      last_clk <= clk;
       _uart_cs <= 1'b1;
       if (clk & !last_clk) begin
          last_iorq <= _iorq;
-         if (last_iorq & !_iorq & ab[7:1] == 7'b1010101)
+         if (last_iorq & (!_iorq) & uart_select)
             _uart_cs <= 1'b0;
       end
    end
@@ -184,6 +182,29 @@ module gate_level_z80
       .txd(txd)
       );
 
-   assign db_i = _iorq ? ram_dout : uart_dout;
+   // Generate a 1 cycle long WR pulse for the RAM on the falling
+   // edge of the first clock cycle in the Mem cycle (end of T2)
+
+   always @(posedge eclk) begin
+      ram_wr <= 1'b0;
+      if (clk & !last_clk) begin
+         last_mreq_and_wr <= (!_mreq) & (!_wr);
+         if ((!last_mreq_and_wr) & (!_mreq) & (!_wr))
+            ram_wr <= 1'b1;
+      end
+   end
+
+   ram_64Kx8 ram
+     (
+      .clk(eclk),
+      .a(ab),
+      .dout(ram_dout),
+      .din(db_o),
+      .wr(ram_wr)
+      );
+
+   // The z80doc/z80full tests expect IO reads to return 0xBF
+
+   assign db_i = _iorq ? ram_dout : uart_select ? uart_dout : 8'hBF;
 
 endmodule
