@@ -36,14 +36,18 @@ module main();
       end
       if (!_halt) begin
          halt_count <= halt_count + 1;
-         if (halt_count == 625)
+         if (halt_count == 10)
            $finish;
       end
       _halt_last <= _halt;
    end
 
+   wire [7:0] data = _wr ? db_i : db_o;
+   wire [15:0] trace = {clk, _reset, _wait, _iorq, _mreq, _wr, _rd, _m1, data};
+
    // Log bus activity
    always @(posedge clk) begin
+      $display("   trace: %02x %02x", trace[7:0], trace[15:8]);
       if (_reset_last & !_reset)
         $display("reset asserted");
       if (!_reset_last & _reset)
@@ -118,7 +122,7 @@ module main();
    // 3e LD a,n
    // 3c inc a
 
-   ram_6502 _ram_6502(eclk, ereset, clk, ab, db_i, db_o, _wr);
+   ram_6502 _ram_6502(eclk, ereset, clk, ab, db_i, db_o, !(!_wr & !_mreq));
 
 `ifndef verilator
    initial begin
