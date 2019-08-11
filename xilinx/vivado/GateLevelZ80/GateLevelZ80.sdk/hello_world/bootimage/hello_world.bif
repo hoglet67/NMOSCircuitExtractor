@@ -1,0 +1,7 @@
+//arch = zynq; split = false; format = BIN
+the_ROM_image:
+{
+	[bootloader]/home/dmb/atom/NMOSCircuitExtractor/xilinx/vivado/GateLevelZ80/GateLevelZ80.sdk/zynq_fsbl/Debug/zynq_fsbl.elf
+	/home/dmb/atom/NMOSCircuitExtractor/xilinx/vivado/GateLevelZ80/GateLevelZ80.sdk/TopBlock_wrapper_hw_platform_0/TopBlock_wrapper.bit
+	/home/dmb/atom/NMOSCircuitExtractor/xilinx/vivado/GateLevelZ80/GateLevelZ80.sdk/hello_world/Debug/hello_world.elf
+}
