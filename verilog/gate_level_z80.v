@@ -4,7 +4,8 @@
 
 module gate_level_z80
 (
-    input sys_clk
+    input eclk
+  , input locked
   , output reg clk
   , output reg _reset
   , output _halt
@@ -21,9 +22,7 @@ module gate_level_z80
   , output txd
  );
 
-   wire        eclk;
    wire        erst;
-   wire        locked;
    wire [15:0] ab;
    wire [7:0]  ram_dout;
    wire [7:0]  uart_dout;
@@ -32,31 +31,6 @@ module gate_level_z80
    reg [31:0]  c;
    reg [7:0]   i;
 
-`ifdef VIVADO
-    clk_gen clk_gen0(
-    .clk_in1(sys_clk),
-    .clk_out1(eclk),
-    .reset(1'b0),
-    .locked(locked)
-    );
-`else
-   wire        clk_fx;
-   DCM #(
-        .CLKFX_MULTIPLY  (8),
-        .CLKFX_DIVIDE    (16),
-        .CLK_FEEDBACK    ("NONE")      // Used in DFS mode only
-     ) inst_dcm (
-        .CLKIN           (sys_clk),
-        .CLKFB           (1'b0),
-        .RST             (1'b0),
-        .DSSEN           (1'b0),
-        .PSINCDEC        (1'b0),
-        .PSEN            (1'b0),
-        .PSCLK           (1'b0),
-        .CLKFX           (fx_clk)
-    );
-   BUFG inst_bufg (.I(fx_clk), .O(eclk));
-`endif
 
    // TODO: should debounce this!
    assign ereset = btn[0];
